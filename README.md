@@ -33,6 +33,10 @@ The attribute values are returned as Python primitive and built-in types (`integ
 `pyca/cryptography` doesn't support ECDSA keys with explicit parameters ([#7339](https://github.com/pyca/cryptography/issues/7339), [#5659](https://github.com/pyca/cryptography/issues/5659)).
 Therefore, loading ECDSA private and public keys from base64 strings are not supported.
 
+### Parsing public key of ECDSA X509 certificates
+Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) and [#5659](https://github.com/pyca/cryptography/issues/5659), it is not always possible to query the public key size and curve of ECDSA X509 certificates. 
+This issue doesn't affect the parsing of the ECDSA X509 certificate itself.
+
 ## Usage
 
 ### X509 Certificate
