@@ -1,10 +1,11 @@
+import asn1
+import ipaddress
 import subprocess
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
-import asn1, ipaddress
 from cryptography.hazmat._oid import ObjectIdentifier
 from X509_wrapper import BASE
 
@@ -15,10 +16,11 @@ def encode_to_der(content, typ=asn1.Numbers.UTF8String):
     encoder.write(content, typ)
     return encoder.output()
 
-def generate_csr(file_csr='file.csr', file_key='file.key_priv', cert_format='PEM', key_type='RSA', \
-                 key_size=3072, key_curve=ec.SECP256R1, CN=None, OU=None, O=None, C=None, \
-                 DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None, SID=None):
-    assert cert_format in ('PEM', 'DER')
+def generate(file_csr='file.csr', file_key='file.key', file_format='PEM', \
+             key_type='RSA', key_size=3072, key_curve=ec.SECP256R1, \
+             CN=None, OU=None, O=None, C=None, \
+             DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None, SID=None):
+    assert file_format in ('PEM', 'DER')
     assert key_type in ('RSA', 'ECDSA')
     assert key_size in (1024, 2048, 3072, 4096)
 
@@ -71,7 +73,7 @@ def generate_csr(file_csr='file.csr', file_key='file.key_priv', cert_format='PEM
     csr = csr.sign(key, hashes.SHA256())
 
     # Save CSR
-    if cert_format == 'PEM':
+    if file_format == 'PEM':
         with open(file_csr, "wb") as f:
             f.write(csr.public_bytes(serialization.Encoding.PEM))
     else:
