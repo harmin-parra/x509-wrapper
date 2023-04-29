@@ -4,7 +4,7 @@
 
 It allows to query X509 chryptography object attributes in a fast and easy way.
 
-The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `lists`) instead of being returned as instances of [pyca/cryptography](https://cryptography.io/en/latest/) classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
+The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `lists`) instead of being returned as  instances of [pyca/cryptography](https://cryptography.io/en/latest/) classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
 
 ## Supported X509 cryptography objects
 - Certificate
@@ -53,4 +53,43 @@ print("Key Type:", cert.get_key_type())
 print("Key Size:", cert.get_key_size())
 print("Key Curve:", cert.get_key_curve())
 
+```
+
+### X509 CRL
+
+### Loaders
+```python
+from X509_wrapper import CRL
+
+# Loading from PEM format file
+crl = CRL.load_der_file("crl.pem")
+
+# Loading from DER format file
+crl = CRL.load_pem_file("crl.der")
+
+# Loading from PEM base64 string
+b64 = "MIIDSzCCAbM....."
+crl = CRL.load_base64(b64)
+```
+
+### Getters
+```python
+print("IssuerDN:", crl.get_issuer_dn())
+print("Signature algorithm:", crl.get_signature_algorithm())
+print("Authority Key Identifier:", crl.get_aki())
+print("CRL number:", crl.get_crl_number())
+
+# Delta CRL getters
+print("Delta CRL indicator:", crl.is_delta_crl())
+print("Delta CRL number:", crl.get_delta_number())
+
+# Entry getters
+
+# Serial number as HEX string
+entry = crl.get_entry("E01926C0C94B92D8F8199F558091DC9F349E6B25")
+# Serial number as big integer
+entry = crl.get_entry(1279374827163150402555346875025145791019302677285)
+
+print("CRL entry reason:", entry.get_reason())
+print("CRL entry invalidity date:", entry.get_invalidity_date())
 ```
