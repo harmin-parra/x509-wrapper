@@ -30,8 +30,8 @@ The attribute values are returned as Python primitive and built-in types (`integ
 
 ### Loading of ECDSA private and public keys
 
-`pyca/cryptography` doesn't support ECDSA keys with explicit parameters [#7339](https://github.com/pyca/cryptography/issues/7339).
-Therefore, loading ECDSA from base64 strings are not supported.
+`pyca/cryptography` doesn't support ECDSA keys with explicit parameters ([#7339](https://github.com/pyca/cryptography/issues/7339), [#5659](https://github.com/pyca/cryptography/issues/5659)).
+Therefore, loading ECDSA private and public keys from base64 strings are not supported.
 
 ## Usage
 
