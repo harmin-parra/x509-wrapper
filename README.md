@@ -13,6 +13,14 @@ The attribute values are returned as Python primitive and built-in types (`integ
 - Certificate signing request (CSR)
 - RSA / ECDSA public and private keys
 
+## Limitations
+For construction of CSR, only the following relative distinguished names (RND) are supported:
+
+- CN (common name)
+- OU (organizaion unit)
+- O  (organization)
+- C  (country code)
+
 ## Usage
 
 ### X509 Certificate
