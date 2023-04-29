@@ -11,7 +11,7 @@ The attribute values are returned as Python primitive and built-in types (`integ
 - Certificate revocation list (CRL)
 - Delta certificate revocationlist (Delta CRL)
 - Certificate signing request (CSR)
-- RSA / ECDSA public and private keys
+- RSA / ECDSA public and private key
 
 ## Limitations
 For construction of CSR, only the following relative distinguished names (RND) are supported:
@@ -144,4 +144,3 @@ CSR.generate_csr(file_csr="ecdsa.csr", file_key="ecdsa.key", \
                  key_type='ECDSA', key_curve=ec.SECP256R1, CN='test',\
                  DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], IP=['127.0.0.1'])
 ```
-
