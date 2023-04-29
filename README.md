@@ -93,3 +93,47 @@ entry = crl.get_entry(1279374827163150402555346875025145791019302677285)
 print("CRL entry reason:", entry.get_reason())
 print("CRL entry invalidity date:", entry.get_invalidity_date())
 ```
+
+### X509 CSR
+
+### Loaders
+
+```python
+from X509_wrapper import CSR
+
+# Loading from PEM format file
+csr = CSR.load_der_file("csr.pem")
+
+# Loading from DER format file
+csr = CSR.load_pem_file("csr.der")
+
+# Loading from PEM base64 string
+b64 = "MIIDSzCCAbM....."
+csr = CSR.load_base64(b64)
+```
+
+### Getters
+
+```python
+print("SubjectDN:", csr.get_subject_dn())
+print("Subject Alternative Name:", csr.get_san_list())
+print("Signature algorithm:", csr.get_signature_algorithm())
+
+print("Key Type:", csr.get_key_type())
+print("Key Size:", csr.get_key_size())
+print("Key Curve:", csr.get_key_curve())
+```
+
+### Constructor
+```python
+from cryptography.hazmat.primitives.asymmetric import ec
+
+CSR.generate_csr(file_csr="rsa.csr", file_key="rsa.key", \
+                 key_type='RSA', key_size=3072, \
+                 CN='test', OU='Unit', O='Example', C='FR',)
+
+CSR.generate_csr(file_csr="ecdsa.csr", file_key="ecdsa.key", \
+                 key_type='ECDSA', key_curve=ec.SECP256R1, CN='test',\
+                 DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], IP=['127.0.0.1'])
+```
+
