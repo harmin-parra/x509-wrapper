@@ -14,7 +14,7 @@ The attribute values are returned as Python primitive and built-in types (`integ
 - RSA / ECDSA public and private key
 
 ## Limitations
-Construction/Generation of CSR*
+### Construction/Generation of CSR*
 
 + Only the following relative distinguished names (RDN) are supported:
   + CN (common name)
@@ -28,7 +28,7 @@ Construction/Generation of CSR*
 
 *issues don't apply to CSR loaders
 
-Loading of ECDSA private and public keys
+### Loading of ECDSA private and public keys
 
 `pyca/cryptography` doesn't support ECDSA keys with explicit parameters are not supported [#7339](https://github.com/pyca/cryptography/issues/7339).
 Therefore, loading ECDSA form base65 string are not supported.
