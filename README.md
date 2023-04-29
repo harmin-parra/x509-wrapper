@@ -11,7 +11,7 @@ The attribute values are returned as Python primitive and built-in types (`integ
 - Certificate revocation list (CRL)
 - Delta certificate revocationlist (Delta CRL)
 - Certificate signing request (CSR)
-- RSA/ECDSA public and private keys
+- RSA / ECDSA public and private keys
 
 ## Usage
 
