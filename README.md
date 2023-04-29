@@ -4,7 +4,7 @@
 
 It allows to query X509 chryptography object attributes in a fast and easy way.
 
-The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `lists`) instead of being returned as  instances of [pyca/cryptography](https://cryptography.io/en/latest/) classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
+The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `lists`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
 
 ## Supported X509 cryptography objects
 - Certificate
@@ -14,12 +14,24 @@ The attribute values are returned as Python primitive and built-in types (`integ
 - RSA / ECDSA public and private key
 
 ## Limitations
-For construction of CSR, only the following relative distinguished names (RND) are supported:
+Construction/Generation of CSR*
 
-- CN (common name)
-- OU (organizaion unit)
-- O  (organization)
-- C  (country code)
++ Only the following relative distinguished names (RDN) are supported:
+  + CN (common name)
+  + OU (organizaion unit)
+  + O  (organization)
+  + C  (country code)
+
++ Subject Directory Names (SAN) of the following types are not supported:
+  + Directory Name
+  + Other Name
+
+*issues don't apply to CSR loaders
+
+Loading of ECDSA private and public keys
+
+`pyca/cryptography` doesn't support ECDSA keys with explicit parameters are not supported [#7339](https://github.com/pyca/cryptography/issues/7339).
+Therefore, loading ECDSA form base65 string are not supported.
 
 ## Usage
 
@@ -142,5 +154,6 @@ CSR.generate_csr(file_csr="rsa.csr", file_key="rsa.key", \
 
 CSR.generate_csr(file_csr="ecdsa.csr", file_key="ecdsa.key", \
                  key_type='ECDSA', key_curve=ec.SECP256R1, CN='test',\
-                 DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], IP=['127.0.0.1'])
+                 DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], \
+                 IP=['127.0.0.1'], RegID['1.2.3.4'])
 ```
