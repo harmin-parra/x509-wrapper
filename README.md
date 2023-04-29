@@ -148,12 +148,16 @@ print("Key Curve:", csr.get_key_curve())
 ```python
 from cryptography.hazmat.primitives.asymmetric import ec
 
-CSR.generate_csr(file_csr="rsa.csr", file_key="rsa.key", \
-                 key_type='RSA', key_size=3072, \
-                 CN='test', OU='Unit', O='Example', C='FR',)
+CSR.generate(
+    file_csr="rsa.csr", file_key="rsa.key", \
+    key_type='RSA', key_size=3072, \
+    CN='test', OU='Unit', O='Example', C='FR'
+)
 
-CSR.generate_csr(file_csr="ecdsa.csr", file_key="ecdsa.key", \
-                 key_type='ECDSA', key_curve=ec.SECP256R1, CN='test',\
-                 DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], \
-                 IP=['127.0.0.1'], RegID['1.2.3.4'])
+CSR.generate(
+    file_csr="ecdsa.csr", file_key="ecdsa.key", \
+    key_type='ECDSA', key_curve=ec.SECP256R1, CN='test',\
+    DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], \
+    IP=['127.0.0.1'], RegID['1.2.3.4']
+)
 ```
