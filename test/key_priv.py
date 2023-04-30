@@ -8,6 +8,7 @@ key = KEY.load_private_key_base64(b64)
 
 print(key.get_type())
 print(key.get_size())
+print(key.get_curve())
 print(key.get_digest())
 
 print(key.dump("DER"))

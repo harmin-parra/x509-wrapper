@@ -26,8 +26,10 @@ class KEY(BASE):
         return self._obj.key_size
 
     def get_curve(self):
-        assert self.get_type() == "ECDSA"
-        return self._obj.curve.name
+        if self.get_type() == "ECDSA":
+            return self._obj.curve.name
+        else:
+            return None
 
     def get_digest(self):
         return hashlib.sha256(base64.b64decode(self.dump('BASE64'))).hexdigest()

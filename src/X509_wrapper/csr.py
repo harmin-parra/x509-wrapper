@@ -23,6 +23,7 @@ def generate(file_csr='file.csr', file_key='file.key', file_format='PEM', \
     assert file_format in ('PEM', 'DER')
     assert key_type in ('RSA', 'ECDSA')
     assert key_size in (1024, 2048, 3072, 4096)
+    assert key_curve is None or key_curve.__module__ == 'cryptography.hazmat.primitives.asymmetric.ec'
 
     key = None
     if key_type == 'RSA':
