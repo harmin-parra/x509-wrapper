@@ -1,50 +1,113 @@
 from cryptography.hazmat.primitives.asymmetric import ec
-from X509_wrapper import CSR
+from wrapper.x509 import CSR
+import cryptography.x509
+import pytest
 
-# RSA
-csr = CSR.load_der_file("resources/rsa.der.csr")
-csr = CSR.load_pem_file("resources/rsa.pem.csr")
-b64 = "MIIEVDCCArwCAQAwIDEQMA4GA1UECgwHQ29tcGFueTEMMAoGA1UEAwwDcnNhMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAtdktj74lBI096UamLayC756IXPNkTkgCtG8Vxts7sdFKbWFJxHdfcoMCtEwDQ0Mul7/ENG242srOeOlAlqT9oNAcUIklNi6Sg9JnlFxgsEe/t56sEFM1D44qXciBQybt4jJStU2REnU/LMDuD+aTlxNctDhOKM1Cb3jpblgn0WRqO6vVFcZtZaQFnxRyP+Tdh/7xDmf8+YlP49syp2jF52aEJio5Oks05fSmJyYto7ktJiFxlsH5LUbEIIJjGv8okFa8IpDli1RQWLCIKmpnGHd9MITXK5LWUq0Spl9Gl8gkRtknFsv4OzRt1m5GAHwYuRdD4fnDcy8LyuBxAb2fWSSrzFNUJ9Y+LEjeyDQNKZ/Xx6woOtdZUuLlmRNmuBJGKIsagS9Fs2E+vvitHLe47YR3P3GRntqGf7898Aa0+99l4FRPvltGuahxu6yOMDzJrSpmHh8vXcHBF/vn6ALlh8IrHwKEa8KwVpAmp6zQtLnJqLwZ244LCSY83baWeyuDAgMBAAGgge4wgesGCSqGSIb3DQEJDjGB3TCB2jCB1wYDVR0RBIHPMIHMghVyc2EuZGV2Lm9wZW50cnVzdC5jb22CE3JzYS5kZXYuaWRub21pYy5jb22CCWxvY2FsaG9zdIcEfwAAAYYWaHR0cDovL3d3dy5pZG5vbWljLmNvbYERZW1haWxAaWRub21pYy5jb22gHwYKKwYBBAGCNxQCA6ARDA91cG5AaWRub21pYy5jb22IBysGAQQBglekODA2MRQwEgYKCZImiZPyLGQBGRYETERBUDEQMA4GA1UECgwHQ29tcGFueTEMMAoGA1UEAwwDcnNhMA0GCSqGSIb3DQEBCwUAA4IBgQAesVaJq4HTKyvHxf0J3V0caksDW7irGKg75JfFIrguTQjfklGQK5IJYsTtwSaDZBbQXCgKEfQ4mv8/9lys2Kja1bA4vBI6YdQm1uPGFNA/IAlwx9eeM9wOEPDw0Yfs+dc0//OiSlLTnNxWHgYgVZ5Sm7yyhMIZl0WBaQ5T7zVjQVLYbLhT1fnLQycU0o2pn/rsc+x8d6tOQtCbfz09xKucd+poa/n32/pzfeuiciAevpWrgCY7sjOc3zMgx3ozPVx3xWw8ca6QyuyBMrA867SHdm0P9ID0LpC7w+P+pIY1PV1eu6aMqsLH6A1duTlXiXKZSP6UVgeQ7WiquE+Lkf2LMk6QGbuRGlVHo+fIdgn+3SHwmUMIfsMyuO/D7NMeP3KRDkk6yN6cArCdhcJkBfJtQ51a3OzUt3w8/QejxWSNDjbcMDSLdsk5+/9vOEn7S8ksSfvuZgH/qHnitvIOgTv3aBBqPHFMfEc3Qfy0OzFSpXtIsaM37wqsiU67XSBN6e4="
-csr = CSR.load_base64(b64)
+    
+def test_load_rsa_der_file():
+    csr = CSR.load_der_file("test/resources/rsa.der.csr")
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
-print(csr.get_subject_dn())
-print(csr.get_san_list())
-print(csr.get_signature_algorithm())
+def test_load_rsa_pem_file():
+    csr = CSR.load_pem_file("test/resources/rsa.pem.csr")
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
-print(csr.get_key_type())
-print(csr.get_key_size())
+def test_load_rsa_base64_string():
+    b64 = "MIIEVDCCArwCAQAwIDEQMA4GA1UECgwHQ29tcGFueTEMMAoGA1UEAwwDcnNhMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAtdktj74lBI096UamLayC756IXPNkTkgCtG8Vxts7sdFKbWFJxHdfcoMCtEwDQ0Mul7/ENG242srOeOlAlqT9oNAcUIklNi6Sg9JnlFxgsEe/t56sEFM1D44qXciBQybt4jJStU2REnU/LMDuD+aTlxNctDhOKM1Cb3jpblgn0WRqO6vVFcZtZaQFnxRyP+Tdh/7xDmf8+YlP49syp2jF52aEJio5Oks05fSmJyYto7ktJiFxlsH5LUbEIIJjGv8okFa8IpDli1RQWLCIKmpnGHd9MITXK5LWUq0Spl9Gl8gkRtknFsv4OzRt1m5GAHwYuRdD4fnDcy8LyuBxAb2fWSSrzFNUJ9Y+LEjeyDQNKZ/Xx6woOtdZUuLlmRNmuBJGKIsagS9Fs2E+vvitHLe47YR3P3GRntqGf7898Aa0+99l4FRPvltGuahxu6yOMDzJrSpmHh8vXcHBF/vn6ALlh8IrHwKEa8KwVpAmp6zQtLnJqLwZ244LCSY83baWeyuDAgMBAAGgge4wgesGCSqGSIb3DQEJDjGB3TCB2jCB1wYDVR0RBIHPMIHMghVyc2EuZGV2Lm9wZW50cnVzdC5jb22CE3JzYS5kZXYuaWRub21pYy5jb22CCWxvY2FsaG9zdIcEfwAAAYYWaHR0cDovL3d3dy5pZG5vbWljLmNvbYERZW1haWxAaWRub21pYy5jb22gHwYKKwYBBAGCNxQCA6ARDA91cG5AaWRub21pYy5jb22IBysGAQQBglekODA2MRQwEgYKCZImiZPyLGQBGRYETERBUDEQMA4GA1UECgwHQ29tcGFueTEMMAoGA1UEAwwDcnNhMA0GCSqGSIb3DQEBCwUAA4IBgQAesVaJq4HTKyvHxf0J3V0caksDW7irGKg75JfFIrguTQjfklGQK5IJYsTtwSaDZBbQXCgKEfQ4mv8/9lys2Kja1bA4vBI6YdQm1uPGFNA/IAlwx9eeM9wOEPDw0Yfs+dc0//OiSlLTnNxWHgYgVZ5Sm7yyhMIZl0WBaQ5T7zVjQVLYbLhT1fnLQycU0o2pn/rsc+x8d6tOQtCbfz09xKucd+poa/n32/pzfeuiciAevpWrgCY7sjOc3zMgx3ozPVx3xWw8ca6QyuyBMrA867SHdm0P9ID0LpC7w+P+pIY1PV1eu6aMqsLH6A1duTlXiXKZSP6UVgeQ7WiquE+Lkf2LMk6QGbuRGlVHo+fIdgn+3SHwmUMIfsMyuO/D7NMeP3KRDkk6yN6cArCdhcJkBfJtQ51a3OzUt3w8/QejxWSNDjbcMDSLdsk5+/9vOEn7S8ksSfvuZgH/qHnitvIOgTv3aBBqPHFMfEc3Qfy0OzFSpXtIsaM37wqsiU67XSBN6e4="
+    csr = CSR.load_base64(b64)
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
-print(csr.dump("DER"))
-print(csr.dump("PEM"))
-print(csr.dump("BASE64"))
+def test_load_ecdsa_der_file():
+    csr = CSR.load_der_file("test/resources/ecdsa.der.csr")
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
-# ECDSA
-csr = CSR.load_pem_file("resources/ecdsa.pem.csr")
-csr = CSR.load_der_file("resources/ecdsa.der.csr")
-b64 = "MIHdMIGEAgEAMCIxEDAOBgNVBAoMB0NvbXBhbnkxDjAMBgNVBAMMBWVjZHNhMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe46AAMAoGCCqGSM49BAMCA0gAMEUCIFp1yT6cTFPfF4bjWonGbuqnKpzqztSzh5eHX2+DRAeEAiEAyzCL4G1Uxlxdo/o3PTYUBCyPUQFCUAe22H1AB/ta1Qg="
-csr = CSR.load_base64(b64)
+def test_load_ecdsa_pem_file():
+    csr = CSR.load_pem_file("test/resources/ecdsa.pem.csr")
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
-print(csr.get_subject_dn())
-print(csr.get_san_list())
-print(csr.get_signature_algorithm())
+def test_load_ecdsa_base64_string():
+    b64 = "MIHdMIGEAgEAMCIxEDAOBgNVBAoMB0NvbXBhbnkxDjAMBgNVBAMMBWVjZHNhMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe46AAMAoGCCqGSM49BAMCA0gAMEUCIFp1yT6cTFPfF4bjWonGbuqnKpzqztSzh5eHX2+DRAeEAiEAyzCL4G1Uxlxdo/o3PTYUBCyPUQFCUAe22H1AB/ta1Qg="
+    csr = CSR.load_base64(b64)
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
-print(csr.get_key_type())
-print(csr.get_key_size())
-print(csr.get_key_curve())
+_rsa = None
+_ecdsa = None
 
-print(csr.dump("DER"))
-print(csr.dump("PEM"))
-print(csr.dump("BASE64"))
+@pytest.fixture
+def csr_rsa():
+    global _rsa
+    if _rsa is None:
+        _rsa = CSR.load_pem_file("test/resources/rsa.pem.csr")
+    return _rsa
 
-# Constructor
-CSR.generate(file_csr="tmp/rsa.csr", file_key="tmp/rsa.key", \
-                     key_type='RSA', key_size=1024, \
-                     CN='test', OU='test', O='test', C='FR',\
-                     DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'], \
-                     Email=['test@email.com'], IP=["127.0.0.1"])
+@pytest.fixture
+def csr_ecdsa():
+    global _ecdsa
+    if _ecdsa is None:
+        _ecdsa = CSR.load_pem_file("test/resources/ecdsa.pem.csr")
+    return _ecdsa
 
-CSR.generate(file_csr="tmp/ecdsa.csr", file_key="tmp/ecdsa.key", \
-                     key_type='ECDSA', key_curve=ec.BrainpoolP512R1, \
-                     CN='test', OU='test', O='test', C='FR',\
-                     DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'], \
-                     Email=['test@email.com'], IP=["127.0.0.1"])
+def test_subjectDN(csr_rsa):
+    assert csr_rsa.get_subject_dn() == "CN=user,O=Company"
+
+def test_san(csr_rsa):
+    values = csr_rsa.get_san_list()
+    assert 'DNS:www.example.com' in values
+    assert 'IP:127.0.0.1' in values
+    assert 'RegID:1.3.6.1.4.1.343' in values
+    assert 'Email:email@example.com' in values
+    assert 'DirName:CN=machine,O=Company,DC=LDAP' in values
+    assert "Other:('1.3.6.1.4.1.311.20.2.3', 'upn@example.com')" in values
+    #assert "Other:('1.3.6.1.4.1.311.25.1', '040b23831111111111fb772f94')" in values
+    assert "Other:('1.3.6.1.5.5.7.8.9', 'smtpUTF8Mailbox@example.com')" in values
+
+def test_rsa_key_type(csr_rsa):
+    assert csr_rsa.get_key_type() == "RSA"
+
+def test_rsa_key_size(csr_rsa):
+    assert csr_rsa.get_key_size() == 3072
+
+def test_rsa_key_curve(csr_rsa):
+    assert csr_rsa.get_key_curve() == None
+
+def test_ecdsa_key_type(csr_ecdsa):
+    assert csr_ecdsa.get_key_type() == "ECDSA"
+
+def test_ecdsa_key_size(csr_ecdsa):
+    assert csr_ecdsa.get_key_size() == 256
+
+def test_ecdsa_key_curve(csr_ecdsa):
+    assert csr_ecdsa.get_key_curve() == "secp256r1"
+
+def test_generate_rsa_csr():
+    CSR.generate(
+        file_csr="test/tmp/rsa.csr", file_key="test/tmp/rsa.key", \
+        key_type='RSA', key_size=1024, \
+        CN='test', OU='test', O='test', C='FR',\
+        DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'], \
+        Email=['test@email.com'], IP=["127.0.0.1"]
+    )
+    csr = CSR.load_pem_file("test/tmp/rsa.csr")
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
+
+def test_generate_ecdsa_csr():
+    CSR.generate(
+        file_csr="test/tmp/ecdsa.csr", file_key="test/tmp/ecdsa.key", \
+        key_type='ECDSA', key_curve=ec.BrainpoolP512R1, \
+        CN='test', OU='test', O='test', C='FR',\
+        DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'], \
+        Email=['test@email.com'], IP=["127.0.0.1"]
+    )
+    csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
+
+
+def test_dump_rsa(csr_rsa):
+    print(csr_rsa.dump("DER"))
+    print(csr_rsa.dump("BASE64"))
+    print(csr_rsa.dump("PEM"))
+
+def test_dump_ecdsa(csr_ecdsa):
+    print(csr_ecdsa.dump("DER"))
+    print(csr_ecdsa.dump("BASE64"))
+    print(csr_ecdsa.dump("PEM"))
