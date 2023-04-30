@@ -31,11 +31,12 @@ The attribute values are returned as Python primitive and built-in types (`integ
 ### Loading of ECDSA private and public keys
 
 `pyca/cryptography` doesn't support ECDSA keys with explicit parameters ([#7339](https://github.com/pyca/cryptography/issues/7339), [#5659](https://github.com/pyca/cryptography/issues/5659)).
-Therefore, loading ECDSA private and public keys from base64 strings are not supported.
+Therefore, loading ECDSA keys from base64 strings are not supported.
 
-### Parsing public key of ECDSA X509 certificates
+### Parsing public key of ECDSA X509 certificates*
 Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) and [#5659](https://github.com/pyca/cryptography/issues/5659), it is not always possible to query the public key size and curve of ECDSA X509 certificates. 
-This issue doesn't affect the parsing of the ECDSA X509 certificate itself.
+
+*This issue doesn't affect the parsing of the ECDSA X509 certificate itself.
 
 ## Usage
 
@@ -72,6 +73,8 @@ print("CRL distribution points", cert.get_crl_dp())
 print("Delta CRL distribution points", cert.get_delta_dp())
 print("Authority Information Access:", cert.get_authority_info_access())
 print("Certificate Policies:", cert.get_policies())
+print("Key usage:", cert.get_key_usage())
+print("Extended key usage:", cert.get_ext_key_usage())
 
 print("Key Type:", cert.get_key_type())
 print("Key Size:", cert.get_key_size())
@@ -164,4 +167,39 @@ CSR.generate(
     DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], \
     IP=['127.0.0.1'], RegID['1.2.3.4']
 )
+```
+
+### Keys
+
+### Loaders
+```python
+from X509_wrapper import KEY
+
+# Loading private key from PEM format file
+key = KEY.load_private_key_pem_file("files/file.key")
+
+# Loading private key from DER format file
+key = KEY.load_private_key_der_file("files/file.key")
+
+# Loading private key from PEM base64 string
+b64 = "MIIG4wIBAAKC......"
+key = KEY.load_private_key_base64(b64)
+
+# Loading public key from PEM format file
+key = KEY.load_public_key_pem_file("files/file.key")
+
+# Loading public key from DER format file
+key = KEY.load_public_key_der_file("files/file.key")
+
+# Loading public key from PEM base64 string
+b64 = "MIIBojANBg......."
+key = KEY.load_public_key_base64(b64)
+```
+
+### Getters
+```python
+print("Key Type:", key.get_type())
+print("Key Size:", key.get_size())
+print("Key Curve:", key.get_curve())
+print("Key Digest:", key.get_digest())
 ```
