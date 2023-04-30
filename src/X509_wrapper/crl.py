@@ -1,3 +1,4 @@
+import datetime
 import subprocess
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -34,10 +35,12 @@ class _CRL(BASE):
     def get_crl_number(self):
         return self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_NUMBER).value.crl_number
 
+    # Get the next publish date
     def get_next_publish(self):
         for ext in self._obj.extensions:
             if ext.value.oid.dotted_string == "1.3.6.1.4.1.311.21.4":
-                return decode_asn1_bytes(ext.value.value)[1]
+                dt = decode_asn1_bytes(ext.value.value)[1]
+                return datetime.datetime.strptime(dt, "%y%m%d%H%M%SZ")
         return None
 
     # Get the CRL number
@@ -52,7 +55,7 @@ class _CRL(BASE):
     def get_entry(self, serial):
         assert isinstance(serial, str) or isinstance(serial, int)
         if isinstance(serial, str):
-            serial = int(serial, base = 16)
+            serial = int(serial, base=16)
         entry = self._obj.get_revoked_certificate_by_serial_number(serial)
         print(f"CRL entry for serial {serial:X}:")
         if entry is None :
@@ -88,6 +91,12 @@ class CRL_ENTRY():
     def get_reason(self):
         try:
             return self._obj.extensions.get_extension_for_oid(CRLEntryExtensionOID.CRL_REASON).value.reason._value_
+        except x509.extensions.ExtensionNotFound:
+            return None
+
+    def get_revocation_date(self):
+        try:
+            return self._obj.revocation_date
         except x509.extensions.ExtensionNotFound:
             return None
 

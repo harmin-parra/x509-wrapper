@@ -37,27 +37,30 @@ print(delta.dump("DER"))
 print(delta.dump("BASE64"))
 print(delta.dump("PEM"))
 
-"""
+
 # CRL Entry
 serial = "E01926C0C94B92D8F8199F558091DC9F349E6B25"
 entry = crl.get_entry(serial)
-serial = int('E01926C0C94B92D8F8199F558091DC9F349E6B25', base = 16)
+serial = int('E01926C0C94B92D8F8199F558091DC9F349E6B25', base=16)
 entry = crl.get_entry(serial)
 print("Entry reason:", entry.get_reason())
-
-serial = "E01926C0C94B92D8F8199F558091DC9F349E6B25"
-entry = crl.get_entry(serial)
-serial = int('E01926C0C94B92D8F8199F558091DC9F349E6B25', base = 16)
-entry = crl.get_entry(serial)
-print("Entry reason:", entry.get_reason())
-
-serial = "E01926C0C94B92D8F8199F558091DC9F349E6B25"
-entry = crl.get_entry(serial)
-print("Entry reason:", entry.get_reason())
+print("Entry revocation date:", entry.get_revocation_date())
 print("Entry invalidity date:", entry.get_invalidity_date())
 
 serial = "E01926C0C94B92D8F8199F558091DC9F349E6B25"
 entry = crl.get_entry(serial)
 print("Entry reason:", entry.get_reason())
+print("Entry revocation date:", entry.get_revocation_date())
 print("Entry invalidity date:", entry.get_invalidity_date())
-"""
+
+serial = "E01926C0C94B92D8F8199F558091DC9F349E6B25"
+entry = crl.get_entry(serial)
+print("Entry reason:", entry.get_reason())
+print("Entry revocation date:", entry.get_revocation_date())
+print("Entry invalidity date:", entry.get_invalidity_date())
+
+serial = "E01926C0C94B92D8F8199F558091DC9F349E6B25"
+entry = crl.get_entry(serial)
+print("Entry reason:", entry.get_reason())
+print("Entry revocation date:", entry.get_revocation_date())
+print("Entry invalidity date:", entry.get_invalidity_date())
