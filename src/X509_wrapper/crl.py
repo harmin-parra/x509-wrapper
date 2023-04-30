@@ -3,6 +3,7 @@ from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 from cryptography.x509.oid import CRLEntryExtensionOID
 from X509_wrapper import BASE
+from X509_wrapper.base import decode_asn1_bytes
 
 
 class _CRL(BASE):
@@ -32,6 +33,12 @@ class _CRL(BASE):
     # return: The CRL number
     def get_crl_number(self):
         return self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_NUMBER).value.crl_number
+
+    def get_next_publish(self):
+        for ext in self._obj.extensions:
+            if ext.value.oid.dotted_string == "1.3.6.1.4.1.311.21.4":
+                return decode_asn1_bytes(ext.value.value)[1]
+        return None
 
     # Get the CRL number
     # return: The CRL number

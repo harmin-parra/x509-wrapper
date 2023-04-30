@@ -1,4 +1,5 @@
-import datetime, subprocess
+import datetime
+import subprocess
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 from X509_wrapper import BASE, get_general_names
@@ -26,7 +27,7 @@ class _X509(BASE):
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
             return get_general_names(ext)
         except x509.extensions.ExtensionNotFound:
-            return []
+            return None
 
     def has_expired(self):
         return self._obj.not_valid_after <= datetime.datetime.now()
@@ -44,7 +45,7 @@ class _X509(BASE):
             for e in ext:
                 result.append(str(e.full_name[0].value))
         except x509.extensions.ExtensionNotFound:
-            pass
+            return None
         return result
 
     def get_delta_dp(self):
@@ -54,7 +55,7 @@ class _X509(BASE):
             for e in ext:
                 result.append(e.full_name[0].value)
         except x509.extensions.ExtensionNotFound:
-            pass
+            return None
         return result
 
     def get_authority_info_access(self):
@@ -64,7 +65,42 @@ class _X509(BASE):
             for e in ext:
                 result.append(e.access_method._name + ": " + e.access_location.value)
         except x509.extensions.ExtensionNotFound:
-            pass
+            return None
+        return result
+
+    def get_key_usage(self):
+        result = {}
+        try:
+            result['critical'] = self._obj.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE).critical
+            ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE).value
+            result['digital_signature'] = ext.digital_signature
+            result['content_commitment'] = ext.content_commitment
+            result['key_encipherment'] = ext.key_encipherment
+            result['data_encipherment'] = ext.data_encipherment
+            result['key_agreement'] = ext.key_agreement
+            result['certificate_sign'] = ext.key_cert_sign
+            result['crl_sign'] = ext.crl_sign
+            if not ext.key_agreement:
+                result['encipher_only'] = False
+                result['decipher_only'] = False
+            else:
+                result['encipher_only'] = ext.encipher_only
+                result['decipher_only'] = ext.decipher_only                
+        except x509.extensions.ExtensionNotFound:
+            return None
+        return result
+
+    def get_ext_key_usage(self):
+        result = {}
+        try:
+            result['critical'] = self._obj.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE).critical
+            ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE).value
+            values = []
+            for e in ext:
+                values.append(e.dotted_string)
+            result['value'] = values
+        except x509.extensions.ExtensionNotFound:
+            return None
         return result
 
     def get_policies(self):
@@ -85,7 +121,7 @@ class _X509(BASE):
                     value += " - " + str(e._policy_qualifiers)
                 result.append(value)
         except x509.extensions.ExtensionNotFound:
-            pass
+            return None
         return result
 
     #
