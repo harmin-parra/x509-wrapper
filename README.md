@@ -9,16 +9,16 @@ The attribute values are returned as Python primitive and built-in types (`integ
 ## Supported X509 cryptography objects
 - Certificate
 - Certificate revocation list (CRL)
-- Delta certificate revocationlist (Delta CRL)
+- Delta certificate revocation list (Delta CRL)
 - Certificate signing request (CSR)
 - RSA / ECDSA public and private key
 
 ## Limitations
-### Construction/Generation of CSR*
+### Construction/Generation of CSRs*
 
 + Only the following relative distinguished names (RDN) are supported:
   + CN (common name)
-  + OU (organizaion unit)
+  + OU (organization unit)
   + O  (organization)
   + C  (country code)
 
@@ -28,9 +28,9 @@ The attribute values are returned as Python primitive and built-in types (`integ
 
 *issues don't apply to CSR loaders
 
-### Certificate policies extension
+### Parsing of certificates
 
-The extraction of the Certificate policies needs improvement
+The extraction of othername SAN and Certificate policies need improvement
 
 ### Loading of ECDSA private and public keys
 
