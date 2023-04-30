@@ -1,8 +1,15 @@
+import asn1
 from abc import ABC, abstractmethod
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
 
+
+def decode_asn1_bytes(value):
+    decoder = asn1.Decoder()
+    decoder.start(value)
+    tag, value = decoder.read()
+    return tag, value
 
 def get_general_names(names):
     """ Extract the SAN extensions values of crypto objects X509 and CSR.
@@ -31,7 +38,13 @@ def get_general_names(names):
         if type(e) == x509.general_name.RegisteredID:
             result.append("RegID:" + e.value.dotted_string)
         if type(e) == x509.general_name.OtherName:
-            result.append("Other:" + str((e.type_id.dotted_string, e.value)))
+            val = e.value
+            tag, value = decode_asn1_bytes(e.value)
+            if tag.nr == 12:
+                val = value
+            if tag.nr == 4:
+                val = val.hex()
+            result.append("Other:" + str((e.type_id.dotted_string, val)))
     return result
 
 
@@ -106,13 +119,16 @@ class BASE(ABC):
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
             return get_general_names(ext)
         except x509.extensions.ExtensionNotFound:
-            return []
+            return None
 
     def get_aki(self):
         clazz = type(self).__name__
         if clazz in ("CSR", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_aki'")
-        return self._obj.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value.key_identifier.hex()
+        try:
+            return self._obj.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value.key_identifier.hex()
+        except x509.extensions.ExtensionNotFound:
+            return None
 
     def get_ski(self):
         clazz = type(self).__name__
@@ -149,7 +165,10 @@ class BASE(ABC):
         clazz = type(self).__name__
         if clazz in ("_CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_key_curve'")
-        return self._obj.public_key().curve.name
+        try:
+            return self._obj.public_key().curve.name
+        except AttributeError:
+            return None
 
     #
     # OPERATORS OVERLOADING

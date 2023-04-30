@@ -8,37 +8,19 @@ from X509_wrapper import BASE
 
 class KEY(BASE):
 
-    def __init__(self, obj=None, key_type="UNKNOWN", key_alg="UNKNOWN"):
+    def __init__(self, obj=None):
         super().__init__(obj)
-        self._key_type = key_type
-        self._key_alg = key_alg
-        if obj is not None:
-            self._set_attr()
-
-    def _set_attr(self):
-        if self._obj is None:
-            return
-        if isinstance(self._obj, RSAPrivateKey):
-            self._key_alg = "RSA"
-            self._key_type = "PRIVATE"
-        elif isinstance(self._obj, RSAPublicKey):
-            self._key_alg = "RSA"
-            self._key_type = "PUBLIC"
-        elif isinstance(self._obj, EllipticCurvePrivateKey):
-            self._key_alg = "ECDSA"
-            self._key_type = "PRIVATE"
-        elif isinstance(self._obj, EllipticCurvePublicKey):
-            self._key_alg = "ECDSA"
-            self._key_type = "PUBLIC"
-        else:
-            self._key_alg = "UNKNOWN"
-            self._key_type = "UNKNOWN"
 
     #
     # GETTERS
     #
     def get_type(self):
-        return self._key_alg
+        if isinstance(self._obj, RSAPublicKey) or isinstance(self._obj, RSAPrivateKey):
+            return "RSA"
+        elif isinstance(self._obj, EllipticCurvePublicKey) or isinstance(self._obj, EllipticCurvePrivateKey):
+            return "ECDSA"
+        else:
+            return "Other"
 
     def get_size(self):
         return self._obj.key_size
@@ -110,37 +92,31 @@ class KEY(BASE):
 def load_public_key_pem_file(filepath):
     obj = KEY()
     obj.load_from_file(filepath, serialization.load_pem_public_key)
-    obj._set_attr()
     return obj
 
 def load_public_key_der_file(filepath):
     obj = KEY()
     obj.load_from_file(filepath, serialization.load_der_public_key)
-    obj._set_attr()
     return obj    
     
-def load_private_key_pem_file(filepath):
+def load_private_key_pem_file(filepath, passphrase=None):
     obj = KEY()
-    obj.load_from_file(filepath, serialization.load_pem_private_key)
-    obj._set_attr()
+    obj.load_from_file(filepath, serialization.load_pem_private_key, passphrase)
     return obj
     
-def load_private_key_der_file(filepath):
+def load_private_key_der_file(filepath, passphrase=None):
     obj = KEY()
-    obj.load_from_file(filepath, serialization.load_der_private_key)
-    obj._set_attr()
+    obj.load_from_file(filepath, serialization.load_der_private_key, passphrase)
     return obj
 
 def load_public_key_base64(b64):
     b64 = "-----BEGIN PUBLIC KEY-----\n" + b64 + "\n-----END PUBLIC KEY-----"
     obj = KEY()
     obj.load_from_base64(b64, serialization.load_pem_public_key)
-    obj._set_attr()
     return obj
 
 def load_private_key_base64(b64):
-    b64 = b64 = "-----BEGIN PRIVATE KEY-----\n" + b64 + "\n-----END PRIVATE KEY-----"
+    b64 = b64 = "-----BEGIN RSA PRIVATE KEY-----\n" + b64 + "\n-----END RSA PRIVATE KEY-----"
     obj = KEY()
     obj.load_from_base64(b64, serialization.load_pem_private_key)
-    obj._set_attr()
     return obj
