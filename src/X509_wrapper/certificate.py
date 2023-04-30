@@ -2,7 +2,7 @@ import datetime
 import subprocess
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
-from X509_wrapper import BASE, get_general_names
+from X509_wrapper import BASE, get_general_names, decode_asn1_bytes
 
 
 class _X509(BASE):
@@ -28,6 +28,20 @@ class _X509(BASE):
             return get_general_names(ext)
         except x509.extensions.ExtensionNotFound:
             return None
+
+    def get_sid(self):
+        for ext in self._obj.extensions:
+            if ext.value.oid.dotted_string == "1.3.6.1.4.1.311.25.2":
+                tag, val = decode_asn1_bytes(ext.value.value)
+                tag ,val = decode_asn1_bytes(val)
+                return val
+        return None
+
+    def get_ocsp_nocheck(self):
+        for ext in self._obj.extensions:
+            if ext.value.oid.dotted_string == "1.3.6.1.5.5.7.48.1.5":
+                return ext.critical
+        return None
 
     def has_expired(self):
         return self._obj.not_valid_after <= datetime.datetime.now()
