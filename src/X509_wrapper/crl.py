@@ -28,7 +28,7 @@ class _CRL(BASE):
         try:
             return self._obj.extensions.get_extension_for_oid(ExtensionOID.DELTA_CRL_INDICATOR).value.crl_number
         except x509.extensions.ExtensionNotFound:
-            return -1
+            return None
 
     # Get the CRL number
     # return: The CRL number
@@ -57,12 +57,8 @@ class _CRL(BASE):
         if isinstance(serial, str):
             serial = int(serial, base=16)
         entry = self._obj.get_revoked_certificate_by_serial_number(serial)
-        print(f"CRL entry for serial {serial:X}:")
-        if entry is None :
-            print("None\n")
-        else:
+        if entry is not None :
             entry = CRL_ENTRY(entry)
-            print(entry.dump())
         return entry
 
     #
