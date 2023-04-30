@@ -146,7 +146,7 @@ class BASE(ABC):
         clazz = type(self).__name__
         if clazz in ("CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_pubkey'")
-        from X509_wrapper.key import KEY
+        from .key import KEY
         return KEY(self._obj.public_key())
 
     def get_key_type(self):

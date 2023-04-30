@@ -1,6 +1,6 @@
 import base64
-from X509_wrapper import key
-from X509_wrapper import certificate
+from x509 import key
+from x509 import certificate
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.primitives import serialization
 

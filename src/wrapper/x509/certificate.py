@@ -2,7 +2,7 @@ import datetime
 import subprocess
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
-from X509_wrapper import BASE, get_general_names, decode_asn1_bytes
+from . import BASE, get_general_names, decode_asn1_bytes
 
 
 class _X509(BASE):

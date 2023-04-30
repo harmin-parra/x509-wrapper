@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat._oid import ObjectIdentifier
-from X509_wrapper import BASE
+from . import BASE
 
 
 def encode_to_der(content, typ=asn1.Numbers.UTF8String):
