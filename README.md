@@ -28,6 +28,10 @@ The attribute values are returned as Python primitive and built-in types (`integ
 
 *issues don't apply to CSR loaders
 
+### Certificate policies extension
+
+The extraction of the Certificate policies needs improvement
+
 ### Loading of ECDSA private and public keys
 
 `pyca/cryptography` doesn't support ECDSA keys with explicit parameters ([#7339](https://github.com/pyca/cryptography/issues/7339), [#5659](https://github.com/pyca/cryptography/issues/5659)).
