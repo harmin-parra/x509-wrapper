@@ -2,7 +2,7 @@
 
 `X509_wraper` is a wrapper for the [pyca/cryptography](https://cryptography.io/en/latest/) package.
 
-It allows to query X509 chryptography object attributes in a fast and easy way.
+It allows to query X509 cryptography object attributes in a fast and easy way.
 
 The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `lists`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
 
@@ -28,9 +28,9 @@ The attribute values are returned as Python primitive and built-in types (`integ
 
 *issues don't apply to CSR loaders
 
-### Parsing of certificates
+### Certificate Policies extension
 
-The extraction of othername SAN and Certificate policies need improvement
+The extraction of Certificate Policies extension needs improvement
 
 ### Loading of ECDSA private and public keys
 
@@ -48,7 +48,7 @@ Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) a
 
 ### Loaders
 ```python
-from X509_wrapper import Certificate
+from wrapper.x509 import Certificate
 
 # Loading from PEM format file
 cert = Certificate.load_pem_file("file.pem")
@@ -69,8 +69,8 @@ print("Serial number (INT format):", cert.get_serial_number("INT"))
 print("Serial number (HEX format):", cert.get_serial_number())
 print("Authority Key Identifier:", cert.get_aki())
 print("Subject Key Identifier:", cert.get_ski())
-print("Subject Alternative Name:", cert.get_san_list())
-print("Issuer Alternative Name:", cert.get_ian_list())
+print("Subject Alternative Name:", cert.get_san())
+print("Issuer Alternative Name:", cert.get_ian())
 print("Has Expired:", cert.has_expired())
 print("Signature algorithm:", cert.get_signature_algorithm())
 print("CRL distribution points", cert.get_crl_dp())
@@ -90,7 +90,7 @@ print("Key Curve:", cert.get_key_curve())
 
 ### Loaders
 ```python
-from X509_wrapper import CRL
+from wrapper.x509 import CRL
 
 # Loading from PEM format file
 crl = CRL.load_der_file("crl.pem")
@@ -130,7 +130,7 @@ print("CRL entry invalidity date:", entry.get_invalidity_date())
 ### Loaders
 
 ```python
-from X509_wrapper import CSR
+from wrapper.x509 import CSR
 
 # Loading from PEM format file
 csr = CSR.load_der_file("csr.pem")
@@ -177,7 +177,7 @@ CSR.generate(
 
 ### Loaders
 ```python
-from X509_wrapper import KEY
+from wrapper.x509 import KEY
 
 # Loading private key from PEM format file
 key = KEY.load_private_key_pem_file("files/file.key")
