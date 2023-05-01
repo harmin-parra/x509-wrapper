@@ -5,11 +5,15 @@ from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, ec
+from cryptography.hazmat.primitives.asymmetric import (
+    rsa, 
+    ec,
+)
 from cryptography.hazmat._oid import ObjectIdentifier
 from . import BASE
 
 
+# Auxiliary function for ASN.1 encoding.
 def encode_to_der(content, typ=asn1.Numbers.UTF8String):
     encoder = asn1.Encoder()
     encoder.start()
@@ -19,7 +23,32 @@ def encode_to_der(content, typ=asn1.Numbers.UTF8String):
 def generate(file_csr='file.csr', file_key='file.key', file_format='PEM', \
              key_type='RSA', key_size=3072, key_curve=ec.SECP256R1, \
              CN=None, OU=None, O=None, C=None, \
-             DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None, SID=None):
+             DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None):
+    """ Generate a CSR and private key.
+    Parameters:
+        file_csr (string): The file path to store the CSR
+        file_key (string): The file path to store the private key.
+        file_format (string): The format on which the CSR should be generated.
+            Possible values: 'PEM' and 'DER'.
+        key_type (string): The type of the private key to generate.
+            Possible values: 'RSA' and 'ECDSA'.
+        key_size (string): The size in bits of the private key to generate.
+            Possible values: 1024, 2048, 3072 and 4096
+            Only relevant for RSA keys.
+        key_curve (cryptography.hazmat.primitives.asymmetric.ec):
+            The Elliptic curve of the ECDSA private key to generate.
+            Only relevant for ECDSA keys.
+        CN (string, optional): The Common Name RDN
+        O (string, optional): The Organization RDN
+        OU (string, optional): The Organization Unit RDN
+        C (string, optional): The Country Code RDN
+        DNS (list[string], optional): The list of DNS to include in the SAN extension
+        IP (list[string], optional): The list of IP addresses to include in the SAN extension
+        URI (list[string], optional): The list of URI to include in the SAN extension
+        Email (list[string], optional): The list of Emails to include in the SAN extension
+        UPN (list[string], optional): The list of UPN emails to include in the SAN extension
+        RegID (list[string], optional): The list of Registration IDs to include in the SAN extension
+    """
     assert file_format in ('PEM', 'DER')
     assert key_type in ('RSA', 'ECDSA')
     assert key_size in (1024, 2048, 3072, 4096)
@@ -99,6 +128,10 @@ class CSR(BASE):
             return p.stdout.decode() 
         else:
             return super().dump(fmt)
+
+#
+# Loaders
+#
 
 def load_pem_file(filepath):
     obj = CSR()
