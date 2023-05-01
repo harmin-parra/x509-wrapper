@@ -15,6 +15,10 @@ class KEY(BASE):
     # GETTERS
     #
     def get_type(self):
+        """ Return the key type as string. ""
+        Return:
+            The key type. Possible values: 'RSA', 'ECDSA' and 'Other'
+        """
         if isinstance(self._obj, RSAPublicKey) or isinstance(self._obj, RSAPrivateKey):
             return "RSA"
         elif isinstance(self._obj, EllipticCurvePublicKey) or isinstance(self._obj, EllipticCurvePrivateKey):
@@ -23,9 +27,17 @@ class KEY(BASE):
             return "Other"
 
     def get_size(self):
+        """ Return the key size as int. ""
+        Return:
+            The key size.
+        """
         return self._obj.key_size
 
     def get_curve(self):
+        """ Return the key curve as string. ""
+        Return:
+            The key curve.
+        """
         if self.get_type() == "ECDSA":
             return self._obj.curve.name
         else:
@@ -91,6 +103,9 @@ class KEY(BASE):
         else:
             return "Unsupported key_priv type"
 
+#
+# Loaders
+#
 def load_public_key_pem_file(filepath):
     obj = KEY()
     obj.load_from_file(filepath, serialization.load_pem_public_key)

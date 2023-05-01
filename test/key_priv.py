@@ -4,6 +4,9 @@ from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
 import pytest
 
 
+#
+# Test loaders
+#
 def test_load_rsa_der_file():
     key = KEY.load_private_key_der_file("test/resources/rsa.der.priv.key")
     assert isinstance(key._obj, RSAPrivateKey)
@@ -32,6 +35,9 @@ def test_load_ecdsa_base64_string():
     assert isinstance(key._obj, EllipticCurvePrivateKey)
 """
 
+#
+# Fixtures for getter tests
+#
 _rsa = None
 _ecdsa = None
 
@@ -49,6 +55,9 @@ def key_ecdsa():
         _ecdsa = KEY.load_private_key_pem_file("test/resources/ecdsa.pem.priv.key")
     return _ecdsa
 
+#
+# Test getters
+#
 def test_rsa_key_type(key_rsa):
     assert key_rsa.get_type() == "RSA"
 
@@ -67,6 +76,9 @@ def test_ecdsa_key_size(key_ecdsa):
 def test_ecdsa_key_curve(key_ecdsa):
     assert key_ecdsa.get_curve() == "secp256r1"
 
+#
+# Test dumpers
+#
 def test_dump_rsa(key_rsa):
     print(key_rsa.dump("DER"))
     print(key_rsa.dump("BASE64"))

@@ -16,7 +16,7 @@ class _CRL(BASE):
     # GETTERS
     #
 
-    # Informs whether the CRL has the delta CRL extension
+    # Informs whether the Delta CRL Indicator extension is present
     def is_delta_crl(self):
         try:
             self._obj.extensions.get_extension_for_oid(ExtensionOID.DELTA_CRL_INDICATOR)
@@ -24,6 +24,8 @@ class _CRL(BASE):
         except x509.extensions.ExtensionNotFound:
             return False
 
+    # Get the Delta CRL number
+    # return: The Delta CRL number
     def get_delta_number(self):
         try:
             return self._obj.extensions.get_extension_for_oid(ExtensionOID.DELTA_CRL_INDICATOR).value.crl_number
@@ -35,7 +37,7 @@ class _CRL(BASE):
     def get_crl_number(self):
         return self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_NUMBER).value.crl_number
 
-    # Get the next publish date
+    # Get the Next Publish extension value as datetime.datetime
     def get_next_publish(self):
         for ext in self._obj.extensions:
             if ext.value.oid.dotted_string == "1.3.6.1.4.1.311.21.4":
@@ -75,9 +77,8 @@ class _CRL(BASE):
             return super().dump(fmt)
 
 #
-# AUXILIARY FUNCTION
+# AUXILIARY CLASS
 #
-
 
 class CRL_ENTRY():
 
@@ -116,6 +117,9 @@ class CRL_ENTRY():
             pass
         return result
 
+#
+# Loaders
+#
 def load_pem_file(filepath):
     obj = _CRL()
     obj.load_from_file(filepath, x509.load_pem_x509_crl)
