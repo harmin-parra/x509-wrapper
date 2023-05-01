@@ -4,6 +4,9 @@ import cryptography.x509
 import pytest
 
     
+#
+# Test loaders
+#
 def test_load_rsa_der_file():
     csr = CSR.load_der_file("test/resources/rsa.der.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
@@ -30,6 +33,9 @@ def test_load_ecdsa_base64_string():
     csr = CSR.load_base64(b64)
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
+#
+# Fixtures for getter tests
+#
 _rsa = None
 _ecdsa = None
 
@@ -47,18 +53,21 @@ def csr_ecdsa():
         _ecdsa = CSR.load_pem_file("test/resources/ecdsa.pem.csr")
     return _ecdsa
 
-def test_subjectDN(csr_rsa):
+#
+# Test getters
+#
+def test_subject_dn(csr_rsa):
     assert csr_rsa.get_subject_dn() == "CN=user,O=Company"
 
 def test_san(csr_rsa):
-    values = csr_rsa.get_san_list()
+    values = csr_rsa.get_san()
     assert 'DNS:www.example.com' in values
     assert 'IP:127.0.0.1' in values
     assert 'RegID:1.3.6.1.4.1.343' in values
     assert 'Email:email@example.com' in values
     assert 'DirName:CN=machine,O=Company,DC=LDAP' in values
     assert "Other:('1.3.6.1.4.1.311.20.2.3', 'upn@example.com')" in values
-    #assert "Other:('1.3.6.1.4.1.311.25.1', '040b23831111111111fb772f94')" in values
+    assert "Other:('1.3.6.1.4.1.311.25.1', '23831111111111fb772f94')" in values
     assert "Other:('1.3.6.1.5.5.7.8.9', 'smtpUTF8Mailbox@example.com')" in values
 
 def test_rsa_key_type(csr_rsa):
@@ -79,6 +88,9 @@ def test_ecdsa_key_size(csr_ecdsa):
 def test_ecdsa_key_curve(csr_ecdsa):
     assert csr_ecdsa.get_key_curve() == "secp256r1"
 
+#
+# Test CSR generation
+#
 def test_generate_rsa_csr():
     CSR.generate(
         file_csr="test/tmp/rsa.csr", file_key="test/tmp/rsa.key", \
@@ -101,7 +113,9 @@ def test_generate_ecdsa_csr():
     csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
-
+#
+# Test dumpers
+#
 def test_dump_rsa(csr_rsa):
     print(csr_rsa.dump("DER"))
     print(csr_rsa.dump("BASE64"))
