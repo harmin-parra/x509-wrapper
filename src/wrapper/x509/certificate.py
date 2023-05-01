@@ -2,7 +2,7 @@ import datetime
 import subprocess
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
-from . import BASE, get_general_names, decode_asn1_bytes
+from . import BASE, get_general_names
 
 
 class _X509(BASE):
@@ -15,6 +15,11 @@ class _X509(BASE):
     #
 
     def get_serial_number(self, fmt='HEX'):
+        """ Return the serial number
+        Parameters:
+            fmt (str, optional): The format on which the serial number should be returned.
+                Possible values: 'HEX' for hexadecimal and 'INT' for bit integer.
+        """
         assert fmt == 'HEX' or fmt == 'INT', 'invalid parameter value: ' + fmt
         if fmt == 'INT':
             return self._obj.serial_number
@@ -22,7 +27,8 @@ class _X509(BASE):
             # return hex(self._obj.serial_number)[2:]
             return format(self._obj.serial_number, 'X').rjust(40, '0')
 
-    def get_ian_list(self):
+    def get_ian(self):
+        """ Return the issuer alternative name extension value as a list of string. """
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
             return get_general_names(ext)
@@ -30,29 +36,44 @@ class _X509(BASE):
             return None
 
     def get_sid(self):
+        """ Return the Microsoft SID extension value. """
         for ext in self._obj.extensions:
             if ext.value.oid.dotted_string == "1.3.6.1.4.1.311.25.2":
-                tag, val = decode_asn1_bytes(ext.value.value)
-                tag ,val = decode_asn1_bytes(val)
-                return val
+                import asn1
+                decoder = asn1.Decoder()
+                decoder.start(ext.value.value)
+                tag, val = decoder.read()
+                decoder.start(val)
+                tag, val = decoder.read()
+                decoder.start(val)
+                tag, val = decoder.read()
+                decoder.peek()
+                decoder.enter()
+                tag, val = decoder.read()
+                return val.decode()
         return None
 
     def get_ocsp_nocheck(self):
+        """ Return the OSCP no-check extension value. """
         for ext in self._obj.extensions:
             if ext.value.oid.dotted_string == "1.3.6.1.5.5.7.48.1.5":
                 return ext.critical
         return None
 
     def has_expired(self):
+        """ Informs whether the certificate has expired. """
         return self._obj.not_valid_after <= datetime.datetime.now()
 
     def get_not_valid_after(self):
+        """ Return the Not Valid After extension value as datetime.datetime. """
         return self._obj.not_valid_after
 
-    def get_not_valid_befeore(self):
+    def get_not_valid_before(self):
+        """ Return the Not Valid Before extension value as datetime.datetime. """
         return self._obj._not_valid_before
 
     def get_crl_dp(self):
+        """ Return the CRL distribution point extension value as a list of strings. """
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS).value
@@ -63,6 +84,7 @@ class _X509(BASE):
         return result
 
     def get_delta_dp(self):
+        """ Return the Delta CRL distribution point extension value as a list of strings. """
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.FRESHEST_CRL).value
@@ -73,6 +95,7 @@ class _X509(BASE):
         return result
 
     def get_authority_info_access(self):
+        """ Return the Authority Information Access extension value as a list of strings. """
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
@@ -83,6 +106,7 @@ class _X509(BASE):
         return result
 
     def get_key_usage(self):
+        """ Return the Key Usage extension value as a dictionary. """
         result = {}
         try:
             result['critical'] = self._obj.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE).critical
@@ -105,6 +129,7 @@ class _X509(BASE):
         return result
 
     def get_ext_key_usage(self):
+        """ Return the Extended Key Usage extension value as a dictionary. """
         result = {}
         try:
             result['critical'] = self._obj.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE).critical
@@ -151,7 +176,9 @@ class _X509(BASE):
         else:
             return super().dump(fmt)
 
-
+#
+# Loaders
+#
 def load_pem_file(filepath):
     obj = _X509()
     obj.load_from_file(filepath, x509.load_pem_x509_certificate)

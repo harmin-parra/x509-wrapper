@@ -1,5 +1,8 @@
 import asn1
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
@@ -20,8 +23,8 @@ def get_general_names(names):
     Example:
         ['DNS:www.example.com', 'IP:127.0.0.1',
         'URI:http://www.example.com', 'Email:email@example.com',
-        'RegID:1.3.6.1.4.1.343', 'DirName:CN=machine,O=Functor,DC=LDAP',
-        "Other:('1.3.6.1.4.1.311.20.2.3', '\\x0c\\x0fupn@example.com')"]
+        'RegID:1.3.6.1.4.1.343', 'DirName:CN=machine,O=Company,DC=LDAP',
+        "Other:('1.3.6.1.4.1.311.20.2.3', 'upn@example.com')"]
     """
     result = []
     for e in names.value:
@@ -38,25 +41,17 @@ def get_general_names(names):
         if type(e) == x509.general_name.RegisteredID:
             result.append("RegID:" + e.value.dotted_string)
         if type(e) == x509.general_name.OtherName:
-            val = e.value
             tag, value = decode_asn1_bytes(e.value)
-            if tag.nr == 12:
-                val = value
             if tag.nr == 4:
-                val = val.hex()
-            result.append("Other:" + str((e.type_id.dotted_string, val)))
+                value = value.hex()
+            result.append("Other:" + str((e.type_id.dotted_string, value)))
     return result
 
 
 class BASE(ABC):
-    """ Super class for CRL, CSR, KEY and X509 crypto objects.
+    """ Super class for CRL, CSR, KEY and X509 cryptography objects.
     Attributes:
         _obj: The cryptography x509 object (X509, CRL, CSR or KEY).
-        _objp: The OpenSSL crypto object (X509, CRL, CSR or PKEY).
-        _load_der (callable): The cryptography package method to load a buffer string in DER format.
-        _load_pem (callable): The cryptography package method to load a buffer string in PEM format.
-        _from_cryptography (callable) : The method to create OpenSSL.crypto objects from cryptography objects.
-        _dump (callable): The OpenSSL.crypto package method to dump the OpenSSL.crypto object.
     """
 
     #
@@ -73,11 +68,12 @@ class BASE(ABC):
         """ Load a crypto object from a DER (binary) encoded string.
         Parameters:
             filepath (str): The file path of the crypto object.
+            load_function (function): The function to use to load the crypto object
             passphrase (str, optional): The passphrase of the crypto object.
                                         Relevant only for KEY objects.
         Returns:
             None.
-            Initializes both _obj private attribute.
+            Initializes _obj private attribute.
         """
         try:
             f = open(filepath, 'rb')
@@ -93,7 +89,16 @@ class BASE(ABC):
             raise err
 
     def load_from_base64(self, b64, load_function, passphrase=None):
-        """ Load a crypto object from a base64 string. """
+        """ Load a cryptography object from a base64 string.
+        Parameters:
+            b64 (str): The base64 string to load.
+            load_function (function): The function to use to load the crypto object
+            passphrase (str, optional): The passphrase of the crypto object.
+                                        Relevant only for KEY objects.
+        Returns:
+            None.
+            Initializes _obj private attribute.
+        """
         self._obj = load_function(b64.encode(), passphrase)
 
     #
@@ -101,20 +106,21 @@ class BASE(ABC):
     #
     def get_subject_dn(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "KEY"):
+        if clazz in ("_CRL", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_subject_dn'")
         return self._obj.subject.rfc4514_string()
 
     def get_issuer_dn(self):
         clazz = type(self).__name__
-        if clazz in ("CSR", "KEY"):
+        if clazz in ("_CSR", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_issuer_dn'")
         return self._obj.issuer.rfc4514_string()
 
-    def get_san_list(self):
+    def get_san(self):
+        """ Return the subject alternative name extension value as a list of string. """
         clazz = type(self).__name__
-        if clazz in ("CRL", "KEY"):
-            raise AttributeError(f"'{clazz}' object has no attribute 'get_san_list'")
+        if clazz in ("_CRL", "_KEY"):
+            raise AttributeError(f"'{clazz}' object has no attribute 'get_san'")
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
             return get_general_names(ext)
@@ -123,7 +129,7 @@ class BASE(ABC):
 
     def get_aki(self):
         clazz = type(self).__name__
-        if clazz in ("CSR", "KEY"):
+        if clazz in ("_CSR", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_aki'")
         try:
             return self._obj.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value.key_identifier.hex()
@@ -132,38 +138,38 @@ class BASE(ABC):
 
     def get_ski(self):
         clazz = type(self).__name__
-        if clazz in ("CRL", "CSR", "KEY"):
+        if clazz in ("_CRL", "_CSR", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_ski'")
         return self._obj.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER).value.key_identifier.hex()
 
     def get_signature_algorithm(self):
         clazz = type(self).__name__
-        if clazz in ("KEY"):
+        if clazz in ("_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_signature_algorithm'")
         return self._obj.signature_algorithm_oid._name
 
     def get_pubkey(self):
         clazz = type(self).__name__
-        if clazz in ("CRL", "KEY"):
+        if clazz in ("_CRL", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_pubkey'")
         from .key import KEY
         return KEY(self._obj.public_key())
 
     def get_key_type(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "KEY"):
+        if clazz in ("_CRL", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_key_type'")
         return self.get_pubkey().get_type()
 
     def get_key_size(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "KEY"):
+        if clazz in ("_CRL", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_key_size'")
         return self._obj.public_key().key_size
 
     def get_key_curve(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "KEY"):
+        if clazz in ("_CRL", "_KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_key_curve'")
         try:
             return self._obj.public_key().curve.name
@@ -174,7 +180,6 @@ class BASE(ABC):
     # OPERATORS OVERLOADING
     #
     def __eq__(self, other):
-        #if isinstance(other, type(self)) :
         if type(other) == type(self):
             if self._obj is None and other._obj is None:
                 return True

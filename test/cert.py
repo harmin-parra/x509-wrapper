@@ -2,9 +2,12 @@ from wrapper.x509 import Certificate
 import cryptography.x509
 import pytest
 
-    
+#
+# Test loaders
+#
 def test_load_rsa_der_file():
     cert = Certificate.load_der_file("test/resources/rsa.crt")
+    print(type(cert))
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
 def test_load_rsa_pem_file():
@@ -29,6 +32,9 @@ def test_load_ecdsa_base64_string():
     cert = Certificate.load_base64(b64)
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
+#
+# Fixtures for getter tests
+#
 _rsa = None
 _ecdsa = None
 
@@ -46,10 +52,13 @@ def cert_ecdsa():
         _ecdsa = Certificate.load_pem_file("test/resources/ecdsa.pem")
     return _ecdsa
 
-def test_subjectDN(cert_rsa):
+#
+# Test getters
+#
+def test_subject_dn(cert_rsa):
     assert cert_rsa.get_subject_dn() == "CN=user,OU=Unit,O=Company,C=FR"
 
-def test_issuerDN(cert_rsa):
+def test_issuer_dn(cert_rsa):
     assert cert_rsa.get_issuer_dn() == "CN=Example CA,O=Company"
 
 def test_serial_number(cert_rsa):
@@ -64,18 +73,18 @@ def test_ski(cert_rsa):
     assert cert_rsa.get_ski() == "139cae1027dcb5ca457c81558b468a8e69b7c431"
 
 def test_san(cert_rsa):
-    values = cert_rsa.get_san_list()
+    values = cert_rsa.get_san()
     assert 'DNS:www.example.com' in values
     assert 'IP:127.0.0.1' in values
     assert 'RegID:1.2.3.4' in values
     assert 'Email:email@example.com' in values
     assert 'DirName:CN=machine,O=Example,DC=LDAP' in values
     assert "Other:('1.3.6.1.4.1.311.20.2.3', 'upn@example.com')" in values
-    assert "Other:('1.3.6.1.4.1.311.25.1', '0410ac4b2906aad65d4fa99c4cbcb06a65d9')" in values
+    assert "Other:('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')" in values
     assert "Other:('1.3.6.1.5.5.7.8.9', 'smtpUTF8Mailbox@example.com')" in values
 
 def test_ian(cert_rsa):
-    values = cert_rsa.get_ian_list()
+    values = cert_rsa.get_ian()
     assert 'Email:admin@example.com' in values
 
 def test_rsa_key_type(cert_rsa):
@@ -111,6 +120,9 @@ def test_authority_info_access(cert_rsa):
     assert 'OCSP: http://localhost/ocsp' in values
     assert 'caIssuers: http://localhost/ca' in values
 
+def test_sid(cert_rsa):
+    assert cert_rsa.get_sid() == 'S-1-5-47'
+
 def test_key_usage(cert_rsa):
     values = cert_rsa.get_key_usage()
     assert values['critical'] == False
@@ -140,6 +152,9 @@ def test_OCSP_nocheck_false(cert_ecdsa):
     #assert cert_rsa.get_ocsp_nocheck() == None
     pass
 
+#
+# Test dumpers
+#
 def test_dump_rsa(cert_rsa):
     print(cert_rsa.dump("DER"))
     print(cert_rsa.dump("BASE64"))
