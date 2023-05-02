@@ -83,9 +83,15 @@ def test_san(cert_rsa):
     assert "Other:('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')" in values
     assert "Other:('1.3.6.1.5.5.7.8.9', 'smtpUTF8Mailbox@example.com')" in values
 
+def test_san_empty(cert_ecdsa):
+    assert cert_ecdsa.get_san() is None
+
 def test_ian(cert_rsa):
     values = cert_rsa.get_ian()
     assert 'Email:admin@example.com' in values
+
+def test_ian_empty(cert_ecdsa):
+    assert cert_ecdsa.get_ian() is None
 
 def test_rsa_key_type(cert_rsa):
     assert cert_rsa.get_key_type() == "RSA"
@@ -110,18 +116,30 @@ def test_CRL_dp(cert_rsa):
     assert 'http://localhost/crl' in values
     assert 'ldap://localhost/crl' in values
 
+def test_CRL_dp_empty(cert_ecdsa):
+    assert cert_ecdsa.get_crl_dp() is None
+
 def test_delta_dp(cert_rsa):
     values = cert_rsa.get_delta_dp()
     assert 'http://localhost/delta' in values
     assert 'ldap://localhost/delta' in values
+
+def test_delta_dp_empty(cert_ecdsa):
+    assert cert_ecdsa.get_delta_dp() is None
 
 def test_authority_info_access(cert_rsa):
     values = cert_rsa.get_authority_info_access()
     assert 'OCSP: http://localhost/ocsp' in values
     assert 'caIssuers: http://localhost/ca' in values
 
+def test_authority_info_access_empty(cert_ecdsa):
+    assert cert_ecdsa.get_authority_info_access() is None
+
 def test_sid(cert_rsa):
     assert cert_rsa.get_sid() == 'S-1-5-47'
+
+def test_sid_empty(cert_ecdsa):
+    assert cert_ecdsa.get_sid() is None
 
 def test_key_usage(cert_rsa):
     values = cert_rsa.get_key_usage()
@@ -142,15 +160,14 @@ def test_extended_key_usage(cert_rsa):
     assert '1.3.6.1.5.5.7.3.3' in values['value']
 
 def test_has_expired_true(cert_ecdsa):
-    #assert cert_ecdsa.has_expired() == True
+    assert cert_ecdsa.has_expired() == True
     pass
                      
 def test_OCSP_nocheck_true(cert_rsa):
     assert cert_rsa.get_ocsp_nocheck() == True
 
 def test_OCSP_nocheck_false(cert_ecdsa):
-    #assert cert_rsa.get_ocsp_nocheck() == None
-    pass
+    assert cert_ecdsa.get_ocsp_nocheck() == None
 
 #
 # Test dumpers
