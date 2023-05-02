@@ -16,17 +16,11 @@ The attribute values are returned as Python primitive and built-in types (`integ
 ## Limitations
 ### Construction/Generation of CSRs*
 
-+ Only the following relative distinguished names (RDN) are supported:
-  + CN (common name)
-  + OU (organization unit)
-  + O  (organization)
-  + C  (country code)
-
-+ Subject Directory Names (SAN) of the following types are not supported:
+Subject Alternative Name (SAN) of the following types are not supported:
   + Directory Name
   + Other Name
 
-*issues don't apply to CSR loaders
+*issue doesn't apply to CSR loaders
 
 ### Certificate Policies extension
 
@@ -170,6 +164,20 @@ CSR.generate(
     key_type='ECDSA', key_curve=ec.SECP256R1, CN='test',\
     DNS=['www.test.com', 'www.test.org'], Email=['test@email.com'], \
     IP=['127.0.0.1'], RegID['1.2.3.4']
+)
+
+names = {
+    RDN.CommonName: "Test",
+    RDN.BusinessCategory: 'Business Category',
+    RDN.DNQualifier: 'DN Qualifier',
+    RDN.Generation: 'Generation Qualifier',
+    RDN.GivenName: 'Given Name',
+    RDN.Initials: 'Initials',
+}
+CSR.generate(
+    file_csr="rdn.csr", file_key="rdn.key", \
+    key_type='RSA', key_size=3072, \
+    Names=names,
 )
 ```
 
