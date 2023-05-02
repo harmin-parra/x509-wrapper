@@ -71,6 +71,7 @@ print("CRL distribution points", cert.get_crl_dp())
 print("Delta CRL distribution points", cert.get_delta_dp())
 print("Authority Information Access:", cert.get_authority_info_access())
 print("Certificate Policies:", cert.get_policies())
+print("Microsoft SID:", cert.get_sid())
 print("Key usage:", cert.get_key_usage())
 print("Extended key usage:", cert.get_ext_key_usage())
 
