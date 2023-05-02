@@ -5,7 +5,11 @@ from abc import (
 )
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
-from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+)
 
 
 def decode_asn1_bytes(value):
@@ -51,7 +55,7 @@ def get_general_names(names):
 class BASE(ABC):
     """ Super class for CRL, CSR, KEY and Certificate objects.
     Attributes:
-        _obj: The corresponding pyca/cryptography object (Certificate, CRL, CSR or KEY).
+        _obj: The underlying pyca/cryptography object (Certificate, CRL, CSR or KEY).
     """
 
     #
@@ -196,8 +200,8 @@ class BASE(ABC):
     #
 
     """
-    Save the crypto object into a file
-    :param: filepath: The file path of the crypto object to save
+    Save the cryptography object into a file
+    :param: filepath: The file path of the object to save
     :param: fmt: The format of the file. Accepted values: PEM or DER.
     """
 
@@ -220,8 +224,8 @@ class BASE(ABC):
     #
 
     """
-    Return a string representation of the crypto object
-    :param:  fmt: The format of the crypto object representation. Accepted values: TEXT, PEM, DER or BASE64.
+    Return a string representation of the cryptography object
+    :param:  fmt: The format of the object representation. Accepted values: TEXT, PEM, DER or BASE64.
     :returns: The specified string representation.
     """
 
