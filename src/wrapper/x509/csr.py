@@ -22,7 +22,7 @@ def encode_to_der(content, typ=asn1.Numbers.UTF8String):
 
 def generate(file_csr='file.csr', file_key='file.key', file_format='PEM', \
              key_type='RSA', key_size=3072, key_curve=ec.SECP256R1, \
-             CN=None, OU=None, O=None, C=None, \
+             CN=None, OU=None, O=None, C=None, Names=None, \
              DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None):
     """ Generate a CSR and private key.
     Parameters:
@@ -42,6 +42,8 @@ def generate(file_csr='file.csr', file_key='file.key', file_format='PEM', \
         O (string, optional): The Organization RDN
         OU (string, optional): The Organization Unit RDN
         C (string, optional): The Country Code RDN
+        Names (Dict[wrapper.x509.RDN, str]: Dictionary of RDNs
+            if you need more RDNs apart from CN, O, OU and C
         DNS (list[string], optional): The list of DNS to include in the SAN extension
         IP (list[string], optional): The list of IP addresses to include in the SAN extension
         URI (list[string], optional): The list of URI to include in the SAN extension
@@ -98,6 +100,9 @@ def generate(file_csr='file.csr', file_key='file.key', file_format='PEM', \
         name.append(x509.NameAttribute(NameOID.ORGANIZATION_NAME, O))
     if C is not None:
         name.append(x509.NameAttribute(NameOID.COUNTRY_NAME, C))
+    if Names is not None:
+        for rdn in Names:
+            name.append(x509.NameAttribute(rdn, Names[rdn]))
     csr = csr.subject_name(x509.Name(name))
 
     csr = csr.sign(key, hashes.SHA256())

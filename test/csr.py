@@ -1,5 +1,5 @@
 from cryptography.hazmat.primitives.asymmetric import ec
-from wrapper.x509 import CSR
+from wrapper.x509 import CSR, RDN
 import cryptography.x509
 import pytest
 
@@ -109,6 +109,23 @@ def test_generate_ecdsa_csr():
         CN='test', OU='test', O='test', C='FR',\
         DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'], \
         Email=['test@email.com'], IP=["127.0.0.1"]
+    )
+    csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
+    assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
+
+def test_generate_rdn_csr():
+    names = {
+        RDN.CommonName: "RDNs",
+        RDN.BusinessCategory: 'BC',
+        RDN.DNQualifier: 'DNQ',
+        RDN.Generation: 'Gen',
+        RDN.GivenName: 'GN',
+        RDN.Initials: 'Initials',
+    }
+    CSR.generate(
+        file_csr="test/tmp/rdn.csr", file_key="test/tmp/rdn.key", \
+        key_type='ECDSA', key_curve=ec.BrainpoolP512R1, \
+        Names=names,
     )
     csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
