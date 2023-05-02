@@ -1,6 +1,6 @@
 # X509 Wrapper
 
-`X509_wraper` is a wrapper for the [pyca/cryptography](https://cryptography.io/en/latest/) package.
+`x509_wrapper` is a wrapper for the [pyca/cryptography](https://cryptography.io/en/latest/) package.
 
 It allows to query X509 cryptography object attributes in a fast and easy way.
 
