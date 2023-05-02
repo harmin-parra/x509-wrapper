@@ -31,7 +31,7 @@ def crl1():
 def crl2():
     global _csr2
     if _csr2 is None:
-        _csr2 = CRL.load_pem_file("test/resources/ecdsa.pem.crl")
+        _csr2 = CRL.load_der_file("test/resources/sha-1.crl")
     return _csr2
 
 #
@@ -54,6 +54,9 @@ def test_delta_number_absent(crl1):
 
 def test_next_publish(crl1):
     assert crl1.get_next_publish() == datetime.datetime(2023, 5, 12, 9, 0, 15)
+
+def test_next_publish_empty(crl2):
+    assert crl2.get_next_publish() is None
 
 #
 # Dumpers
