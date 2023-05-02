@@ -1,8 +1,6 @@
 import asn1
-from abc import (
-    ABC,
-    abstractmethod,
-)
+from abc import ABC
+from abc import abstractmethod
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 from cryptography.hazmat.primitives.serialization import (
@@ -11,7 +9,7 @@ from cryptography.hazmat.primitives.serialization import (
     PrivateFormat,
 )
 
-
+# Auxiliary function to decode ASN.1 DER-encoded bytes 
 def decode_asn1_bytes(value):
     decoder = asn1.Decoder()
     decoder.start(value)
