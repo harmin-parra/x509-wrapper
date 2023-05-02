@@ -20,7 +20,7 @@ Subject Alternative Name (SAN) of the following types are not supported:
   + Directory Name
   + Other Name
 
-*issue doesn't apply to CSR loaders
+*This limitation doesn't apply to CSR loaders
 
 ### Certificate Policies extension
 
@@ -29,10 +29,10 @@ The extraction of Certificate Policies extension needs improvement
 ### Loading of ECDSA private and public keys
 
 `pyca/cryptography` doesn't support ECDSA keys with explicit parameters ([#7339](https://github.com/pyca/cryptography/issues/7339), [#5659](https://github.com/pyca/cryptography/issues/5659)).
-Therefore, loading ECDSA keys from base64 strings are not supported.
+Therefore, loading ECDSA keys from base64 strings is not supported.
 
 ### Parsing public key of ECDSA x509 certificates*
-Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) and [#5659](https://github.com/pyca/cryptography/issues/5659), it is not always possible to query the public key size and curve of ECDSA X509 certificates. 
+Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) and [#5659](https://github.com/pyca/cryptography/issues/5659), it is not always possible to query the public key size and curve of ECDSA x509 certificates. 
 
 *This issue doesn't affect the parsing of the ECDSA x509 certificate itself.
 
