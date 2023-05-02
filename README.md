@@ -14,17 +14,17 @@ The attribute values are returned as Python primitive and built-in types (`integ
 - RSA / ECDSA public and private key
 
 ## Limitations
-### Construction/Generation of CSRs*
+### CSR generation with SAN*
 
-Subject Alternative Name (SAN) of the following types are not supported:
+Subject Alternative Name (SAN) of the following types are not supported in CSR generation:
   + Directory Name
   + Other Name
 
-*This limitation doesn't apply to CSR loaders
+*This limitation doesn't apply to CSR loaders.
 
 ### Certificate Policies extension
 
-The extraction of Certificate Policies extension needs improvement
+The extraction of Certificate Policies extension needs improvement.
 
 ### Loading of ECDSA private and public keys
 
