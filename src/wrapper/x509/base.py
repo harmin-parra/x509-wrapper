@@ -15,7 +15,7 @@ def decode_asn1_bytes(value):
     return tag, value
 
 def get_general_names(names):
-    """ Extract the SAN extensions values of crypto objects X509 and CSR.
+    """ Extract the SAN extensions values of Certificates and CSR objects.
     Parameters:
         name (list(cryptography.X509.Extension)): The SAN extensions.
     Returns:
@@ -49,9 +49,9 @@ def get_general_names(names):
 
 
 class BASE(ABC):
-    """ Super class for CRL, CSR, KEY and X509 cryptography objects.
+    """ Super class for CRL, CSR, KEY and Certificate objects.
     Attributes:
-        _obj: The cryptography x509 object (X509, CRL, CSR or KEY).
+        _obj: The corresponding pyca/cryptography object (Certificate, CRL, CSR or KEY).
     """
 
     #
