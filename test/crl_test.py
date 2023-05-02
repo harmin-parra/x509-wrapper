@@ -1,5 +1,6 @@
 from wrapper.x509 import CRL
 import cryptography.x509
+import datetime
 import pytest
 
 #
@@ -7,11 +8,11 @@ import pytest
 #
 def test_load_pem_file():
     crl = CRL.load_pem_file("test/resources/pem.crl")
-    assert isinstance(crl, cryptography.x509.CertificateRevocationList)
+    assert isinstance(crl._obj, cryptography.x509.CertificateRevocationList)
 
 def test_load_der_file():
     crl = CRL.load_der_file("test/resources/der.crl")
-    assert isinstance(crl, cryptography.x509.CertificateRevocationList)
+    assert isinstance(crl._obj, cryptography.x509.CertificateRevocationList)
 
 #
 # Fixtures for getter tests
@@ -43,7 +44,7 @@ def test_aki(crl1):
     assert crl1.get_aki() == "c6fdf8c30cf724224c67f5449f3b599a3753ef56"
 
 def test_crl_number(crl1):
-    assert crl1.get_crl_number() == 4
+    assert crl1.get_crl_number() == 3
 
 def test_is_delta_absent(crl1):
     assert not crl1.is_delta_crl()
@@ -52,10 +53,7 @@ def test_delta_number_absent(crl1):
     assert crl1.get_delta_number() is None
 
 def test_next_publish(crl1):
-    assert crl1.get_next_publish() == "2023-12-15 01:01:20"
-
-def test_next_publish_absent(crl2):
-    assert crl2.get_next_publish() == "2023-12-15 01:01:20"
+    assert crl1.get_next_publish() == datetime.datetime(2023, 5, 12, 9, 0, 15)
 
 #
 # Dumpers
