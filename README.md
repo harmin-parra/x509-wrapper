@@ -4,7 +4,7 @@
 
 It allows to query X509 cryptography object attributes in a fast and easy way.
 
-The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `lists`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
+The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `list`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
 
 ## Supported X509 cryptography objects
 - Certificate
@@ -141,7 +141,7 @@ csr = CSR.load_base64(b64)
 
 ```python
 print("SubjectDN:", csr.get_subject_dn())
-print("Subject Alternative Name:", csr.get_san_list())
+print("Subject Alternative Name:", csr.get_san())
 print("Signature algorithm:", csr.get_signature_algorithm())
 
 print("Key Type:", csr.get_key_type())
