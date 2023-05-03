@@ -14,9 +14,16 @@ The attribute values are returned as Python primitive and built-in types (`integ
 - RSA / ECDSA public and private key
 
 ## Limitations
+### CSR generation with multi-valued RDNs*
+
+No support for CSR generation with multi-valued RDNs
+(Example: `CN=user,OU=unit1,OU=unit2,OU=unit3,C=Company`)
+
+*This limitation doesn't apply to CSR loaders.
+
 ### CSR generation with SAN*
 
-Subject Alternative Name (SAN) of the following types are not supported in CSR generation:
+No support for CSR generation with the following Subject Alternative Name (SAN) types:
   + Directory Name
   + Other Name
 
