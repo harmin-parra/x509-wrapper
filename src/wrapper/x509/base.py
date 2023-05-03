@@ -19,7 +19,7 @@ def decode_asn1_bytes(value):
 def get_general_names(names):
     """ Extract the SAN extensions values of Certificates and CSR objects.
     Args:
-        name (list(cryptography.X509.Extension)): The SAN extensions.
+        name (list(x509.general_name.GeneralName)): The SAN extensions.
     Returns:
         list(str): The SAN extensions values in string format.
     Example:
