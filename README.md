@@ -1,12 +1,12 @@
-# X509 Wrapper
+# X.509 Wrapper
 
 `x509-wrapper` is a wrapper for the [pyca/cryptography](https://cryptography.io/en/latest/) package.
 
-It allows to query x509 cryptography object attributes in a fast and easy way.
+It allows to query X.509 cryptography object attributes in a fast and easy way.
 
 The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `list`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
 
-## Supported x509 cryptography objects
+## Supported X.509 cryptography objects
 - Certificate
 - Certificate revocation list (CRL)
 - Delta certificate revocation list (Delta CRL)
@@ -39,13 +39,13 @@ The extraction of Certificate Policies extension needs improvement.
 Therefore, loading ECDSA keys from base64 strings is not supported.
 
 ### Parsing public key of ECDSA x509 certificates*
-Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) and [#5659](https://github.com/pyca/cryptography/issues/5659), it is not always possible to query the public key size and curve of ECDSA x509 certificates. 
+Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) and [#5659](https://github.com/pyca/cryptography/issues/5659), it is not always possible to query the public key size and curve of ECDSA X.509 certificates. 
 
-*This issue doesn't affect the parsing of the ECDSA x509 certificate itself.
+*This issue doesn't affect the parsing of the ECDSA X.509 certificate itself.
 
 ## Usage
 
-### X509 Certificate
+### X.509 Certificate
 
 ### Loaders
 ```python
@@ -88,7 +88,7 @@ print("Key Curve:", cert.get_key_curve())
 
 ```
 
-### X509 CRL
+### X.509 CRL
 
 ### Loaders
 ```python
@@ -127,7 +127,7 @@ print("CRL entry reason:", entry.get_reason())
 print("CRL entry invalidity date:", entry.get_invalidity_date())
 ```
 
-### X509 CSR
+### X.509 CSR
 
 ### Loaders
 
