@@ -124,6 +124,7 @@ entry = crl.get_entry("E01926C0C94B92D8F8199F558091DC9F349E6B25")
 entry = crl.get_entry(1279374827163150402555346875025145791019302677285)
 
 print("CRL entry reason:", entry.get_reason())
+print("CRL entry revocation date:", entry.get_revocation_date())
 print("CRL entry invalidity date:", entry.get_invalidity_date())
 ```
 
