@@ -17,7 +17,7 @@ The attribute values are returned as Python primitive and built-in types (`integ
 ### CSR generation with multi-valued RDNs*
 
 No support for CSR generation with multi-valued RDNs
-(Example: `CN=user,OU=unit1,OU=unit2,OU=unit3,C=Company`)
+(Example: `CN=user, OU=unit1, OU=unit2, OU=unit3, C=Company`)
 
 *This limitation doesn't apply to CSR loaders.
 
