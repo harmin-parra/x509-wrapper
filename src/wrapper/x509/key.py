@@ -12,11 +12,88 @@ class KEY(BASE):
         super().__init__(obj)
 
     #
+    # Loaders
+    #
+    @classmethod
+    def load_public_key_pem_file(cls, filepath):
+        """ Loads a public key from a PEM format file. 
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The public key
+        """
+        obj = cls()
+        obj.load_from_file(filepath, serialization.load_pem_public_key)
+        return obj
+
+    @classmethod
+    def load_public_key_der_file(cls, filepath):
+        """ Loads a public key from a DER format file. 
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The public key
+        """
+        obj = cls()
+        obj.load_from_file(filepath, serialization.load_der_public_key)
+        return obj    
+
+    @classmethod
+    def load_public_key_base64(cls, b64):
+        """ Loads a public key from a Base64 string.
+        Args:
+            b64 (str): The base64 string to load.
+        Returns:
+            The public key
+        """
+        b64 = "-----BEGIN PUBLIC KEY-----\n" + b64 + "\n-----END PUBLIC KEY-----"
+        obj = cls()
+        obj.load_from_base64(b64, serialization.load_pem_public_key)
+        return obj
+
+    @classmethod
+    def load_private_key_pem_file(cls, filepath, passphrase=None):
+        """ Loads a private key from a PEM format file. 
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The private key
+        """
+        obj = cls()
+        obj.load_from_file(filepath, serialization.load_pem_private_key, passphrase)
+        return obj
+
+    @classmethod
+    def load_private_key_der_file(cls, filepath, passphrase=None):
+        """ Loads a private key from a DER format file. 
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The private key
+        """
+        obj = cls()
+        obj.load_from_file(filepath, serialization.load_der_private_key, passphrase)
+        return obj
+
+    @classmethod
+    def load_private_key_base64(cls, b64):
+        """ Loads a private key from a Base64 string.
+        Args:
+            b64 (str): The base64 string to load.
+        Returns:
+            The private key
+        """
+        b64 = b64 = "-----BEGIN RSA PRIVATE KEY-----\n" + b64 + "\n-----END RSA PRIVATE KEY-----"
+        obj = cls()
+        obj.load_from_base64(b64, serialization.load_pem_private_key)
+        return obj
+
+    #
     # GETTERS
     #
     def get_type(self):
-        """ Return the key type as string. ""
-        Return:
+        """ Returns the key type as string. ""
+        Returns:
             The key type. Possible values: 'RSA', 'ECDSA' and 'Other'
         """
         if isinstance(self._obj, RSAPublicKey) or isinstance(self._obj, RSAPrivateKey):
@@ -27,15 +104,15 @@ class KEY(BASE):
             return "Other"
 
     def get_size(self):
-        """ Return the key size as int. ""
-        Return:
+        """ Returns the key size as int. ""
+        Returns:
             The key size.
         """
         return self._obj.key_size
 
     def get_curve(self):
-        """ Return the key curve as string. ""
-        Return:
+        """ Returns the key curve as string. ""
+        Returns:
             The key curve.
         """
         if self.get_type() == "ECDSA":
@@ -102,38 +179,3 @@ class KEY(BASE):
                     encryption_algorithm=serialization.NoEncryption())
         else:
             return "Unsupported key_priv type"
-
-#
-# Loaders
-#
-def load_public_key_pem_file(filepath):
-    obj = KEY()
-    obj.load_from_file(filepath, serialization.load_pem_public_key)
-    return obj
-
-def load_public_key_der_file(filepath):
-    obj = KEY()
-    obj.load_from_file(filepath, serialization.load_der_public_key)
-    return obj    
-    
-def load_private_key_pem_file(filepath, passphrase=None):
-    obj = KEY()
-    obj.load_from_file(filepath, serialization.load_pem_private_key, passphrase)
-    return obj
-    
-def load_private_key_der_file(filepath, passphrase=None):
-    obj = KEY()
-    obj.load_from_file(filepath, serialization.load_der_private_key, passphrase)
-    return obj
-
-def load_public_key_base64(b64):
-    b64 = "-----BEGIN PUBLIC KEY-----\n" + b64 + "\n-----END PUBLIC KEY-----"
-    obj = KEY()
-    obj.load_from_base64(b64, serialization.load_pem_public_key)
-    return obj
-
-def load_private_key_base64(b64):
-    b64 = b64 = "-----BEGIN RSA PRIVATE KEY-----\n" + b64 + "\n-----END RSA PRIVATE KEY-----"
-    obj = KEY()
-    obj.load_from_base64(b64, serialization.load_pem_private_key)
-    return obj

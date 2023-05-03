@@ -7,15 +7,54 @@ from . import BASE
 from . import decode_asn1_bytes
 
 
-class _CRL(BASE):
+class CRL(BASE):
 
     def __init__(self):
         super().__init__()
 
     #
+    # Loaders
+    #
+    @classmethod
+    def load_pem_file(cls, filepath):
+        """ Loads a CRL from a PEM format file.
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The CRL
+        """
+        obj = cls()
+        obj.load_from_file(filepath, x509.load_pem_x509_crl)
+        return obj
+
+    @classmethod
+    def load_der_file(cls, filepath):
+        """ Loads a CRL from a DER format file.
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The CRL
+        """
+        obj = cls()
+        obj.load_from_file(filepath, x509.load_der_x509_crl)
+        return obj
+
+    @classmethod
+    def load_base64(cls, b64):
+        """ Loads a CRL from a Base64 string.
+        Args:
+            b64 (str): The base64 string to load.
+        Returns:
+            The CRL
+        """
+        b64 = "-----BEGIN X509 CRL-----\n" + b64 + "\n-----END X509 CRL-----"
+        obj = cls()
+        obj.load_from_base64(b64, x509.load_pem_x509_crl)
+        return obj
+
+    #
     # GETTERS
     #
-
     # Informs whether the Delta CRL Indicator extension is present
     def is_delta_crl(self):
         try:
@@ -25,7 +64,7 @@ class _CRL(BASE):
             return False
 
     # Get the Delta CRL number
-    # return: The Delta CRL number
+    # Returns: The Delta CRL number
     def get_delta_number(self):
         try:
             return self._obj.extensions.get_extension_for_oid(ExtensionOID.DELTA_CRL_INDICATOR).value.crl_number
@@ -33,7 +72,7 @@ class _CRL(BASE):
             return None
 
     # Get the CRL number
-    # return: The CRL number
+    # Returns: The CRL number
     def get_crl_number(self):
         return self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_NUMBER).value.crl_number
 
@@ -46,13 +85,13 @@ class _CRL(BASE):
         return None
 
     # Get the CRL number
-    # return: The CRL number
+    # Returns: The CRL number
     def get_number(self):
         return self.get_crl_number()
 
     # Get the CRL revocation entry of a certificate
     # serial: The serial number of the certificate
-    # return: The CRL entry if present.
+    # Returns: The CRL entry if present.
     # None if the certificate is not present in the CRL.
     def get_entry(self, serial):
         assert isinstance(serial, str) or isinstance(serial, int)
@@ -116,24 +155,3 @@ class CRL_ENTRY():
         except x509.extensions.ExtensionNotFound:
             pass
         return result
-
-#
-# Loaders
-#
-def load_pem_file(filepath):
-    obj = _CRL()
-    obj.load_from_file(filepath, x509.load_pem_x509_crl)
-    return obj
-
-
-def load_der_file(filepath):
-    obj = _CRL()
-    obj.load_from_file(filepath, x509.load_der_x509_crl)
-    return obj
-
-
-def load_base64(b64):
-    b64 = "-----BEGIN X509 CRL-----\n" + b64 + "\n-----END X509 CRL-----"
-    obj = _CRL()
-    obj.load_from_base64(b64, x509.load_pem_x509_crl)
-    return obj

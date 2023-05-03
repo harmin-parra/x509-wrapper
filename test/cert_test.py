@@ -7,7 +7,6 @@ import pytest
 #
 def test_load_rsa_der_file():
     cert = Certificate.load_der_file("test/resources/rsa.crt")
-    print(type(cert))
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
 def test_load_rsa_pem_file():

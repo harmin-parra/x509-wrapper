@@ -5,18 +5,57 @@ from cryptography.x509.oid import ExtensionOID
 from . import BASE, get_general_names
 
 
-class _X509(BASE):
+class Certificate(BASE):
 
     def __init__(self):
         super().__init__()
 
     #
+    # Loaders
+    #
+    @classmethod
+    def load_pem_file(cls, filepath: str):
+        """ Loads a certificate from a PEM format file.
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The Certificate
+        """
+        obj = cls()
+        obj.load_from_file(filepath, x509.load_pem_x509_certificate)
+        return obj
+
+    @classmethod
+    def load_der_file(cls: type, filepath: str):
+        """ Loads a certificate from a DER format file. 
+        Args:
+            filepath (str): File path of the file to load.
+        Returns:
+            The Certificate
+        """
+        obj = cls()
+        obj.load_from_file(filepath, x509.load_der_x509_certificate)
+        return obj
+
+    @classmethod
+    def load_base64(cls, b64):
+        """ Loads a certificate from a Base64 string.
+        Args:
+            b64 (str): The base64 string to load.
+        Returns:
+            The Certificate
+        """
+        b64 = "-----BEGIN CERTIFICATE-----\n" + b64 + "\n-----END CERTIFICATE-----"
+        obj = cls()
+        obj.load_from_base64(b64, x509.load_pem_x509_certificate)
+        return obj
+
+    #
     # GETTERS
     #
-
     def get_serial_number(self, fmt='HEX'):
-        """ Return the serial number
-        Parameters:
+        """ Returns the serial number
+        Args:
             fmt (str, optional): The format on which the serial number should be returned.
                 Possible values: 'HEX' for hexadecimal and 'INT' for bit integer.
         """
@@ -28,7 +67,7 @@ class _X509(BASE):
             return format(self._obj.serial_number, 'X').rjust(40, '0')
 
     def get_ian(self):
-        """ Return the issuer alternative name extension value as a list of string. """
+        """ Returns the issuer alternative name extension value as a list of string. """
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.ISSUER_ALTERNATIVE_NAME)
             return get_general_names(ext)
@@ -36,7 +75,7 @@ class _X509(BASE):
             return None
 
     def get_sid(self):
-        """ Return the Microsoft SID extension value. """
+        """ Returns the Microsoft SID extension value. """
         for ext in self._obj.extensions:
             if ext.value.oid.dotted_string == "1.3.6.1.4.1.311.25.2":
                 import asn1
@@ -54,7 +93,7 @@ class _X509(BASE):
         return None
 
     def get_ocsp_nocheck(self):
-        """ Return the OSCP no-check extension value. """
+        """ Returns the OSCP no-check extension value. """
         for ext in self._obj.extensions:
             if ext.value.oid.dotted_string == "1.3.6.1.5.5.7.48.1.5":
                 return ext.critical
@@ -65,15 +104,15 @@ class _X509(BASE):
         return self._obj.not_valid_after <= datetime.datetime.now()
 
     def get_not_valid_after(self):
-        """ Return the Not Valid After extension value as datetime.datetime. """
+        """ Returns the Not Valid After extension value as datetime.datetime. """
         return self._obj.not_valid_after
 
     def get_not_valid_before(self):
-        """ Return the Not Valid Before extension value as datetime.datetime. """
-        return self._obj._not_valid_before
+        """ Returns the Not Valid Before extension value as datetime.datetime. """
+        return self._obj.not_valid_before
 
     def get_crl_dp(self):
-        """ Return the CRL distribution point extension value as a list of strings. """
+        """ Returns the CRL distribution point extension value as a list of strings. """
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS).value
@@ -84,7 +123,7 @@ class _X509(BASE):
         return result
 
     def get_delta_dp(self):
-        """ Return the Delta CRL distribution point extension value as a list of strings. """
+        """ Returns the Delta CRL distribution point extension value as a list of strings. """
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.FRESHEST_CRL).value
@@ -95,7 +134,7 @@ class _X509(BASE):
         return result
 
     def get_authority_info_access(self):
-        """ Return the Authority Information Access extension value as a list of strings. """
+        """ Returns the Authority Information Access extension value as a list of strings. """
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
@@ -106,7 +145,7 @@ class _X509(BASE):
         return result
 
     def get_key_usage(self):
-        """ Return the Key Usage extension value as a dictionary. """
+        """ Returns the Key Usage extension value as a dictionary. """
         result = {}
         try:
             result['critical'] = self._obj.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE).critical
@@ -129,7 +168,7 @@ class _X509(BASE):
         return result
 
     def get_ext_key_usage(self):
-        """ Return the Extended Key Usage extension value as a dictionary. """
+        """ Returns the Extended Key Usage extension value as a dictionary. """
         result = {}
         try:
             result['critical'] = self._obj.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE).critical
@@ -170,29 +209,9 @@ class _X509(BASE):
         if fmt == "TEXT":
             file = "tmp/file.pem"
             self.save(file, "PEM")
-            p = subprocess.run(["openssl", "x509", "-text", "-noout", "-in", file], capture_output=True)
+            p = subprocess.run(["openssl", "x509", "-text", "-noout", "-in", file], \
+                               capture_output=True, check=False)
             p.check_returncode()
             return p.stdout.decode() 
         else:
             return super().dump(fmt)
-
-#
-# Loaders
-#
-def load_pem_file(filepath):
-    obj = _X509()
-    obj.load_from_file(filepath, x509.load_pem_x509_certificate)
-    return obj
-
-
-def load_der_file(filepath):
-    obj = _X509()
-    obj.load_from_file(filepath, x509.load_der_x509_certificate)
-    return obj
-
-
-def load_base64(b64):
-    b64 = "-----BEGIN CERTIFICATE-----\n" + b64 + "\n-----END CERTIFICATE-----"
-    obj = _X509()
-    obj.load_from_base64(b64, x509.load_pem_x509_certificate)
-    return obj

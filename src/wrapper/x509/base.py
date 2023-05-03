@@ -16,9 +16,9 @@ def decode_asn1_bytes(value):
     tag, value = decoder.read()
     return tag, value
 
-def get_general_names(names):
+def get_general_names(names: list[x509.general_name.GeneralName]) -> list[str]:
     """ Extract the SAN extensions values of Certificates and CSR objects.
-    Parameters:
+    Args:
         name (list(cryptography.X509.Extension)): The SAN extensions.
     Returns:
         list(str): The SAN extensions values in string format.
@@ -67,15 +67,12 @@ class BASE(ABC):
     # LOADERS
     #
     def load_from_file(self, filepath, load_function, passphrase=None):
-        """ Load a crypto object from a DER (binary) encoded string.
+        """ Load a cryptography object from a DER (binary) encoded string.
         Parameters:
-            filepath (str): The file path of the crypto object.
-            load_function (function): The function to use to load the crypto object
-            passphrase (str, optional): The passphrase of the crypto object.
+            filepath (str): The file path of the file to load.
+            load_function (function): The function to use to load the object
+            passphrase (str, optional): The passphrase of the file.
                                         Relevant only for KEY objects.
-        Returns:
-            None.
-            Initializes _obj private attribute.
         """
         try:
             f = open(filepath, 'rb')
@@ -94,12 +91,9 @@ class BASE(ABC):
         """ Load a cryptography object from a base64 string.
         Parameters:
             b64 (str): The base64 string to load.
-            load_function (function): The function to use to load the crypto object
-            passphrase (str, optional): The passphrase of the crypto object.
+            load_function (function): The function to use to load the object
+            passphrase (str, optional): The passphrase of the base64.
                                         Relevant only for KEY objects.
-        Returns:
-            None.
-            Initializes _obj private attribute.
         """
         self._obj = load_function(b64.encode(), passphrase)
 
@@ -108,20 +102,20 @@ class BASE(ABC):
     #
     def get_subject_dn(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "_KEY"):
+        if clazz in ("CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_subject_dn'")
         return self._obj.subject.rfc4514_string()
 
     def get_issuer_dn(self):
         clazz = type(self).__name__
-        if clazz in ("_CSR", "_KEY"):
+        if clazz in ("CSR", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_issuer_dn'")
         return self._obj.issuer.rfc4514_string()
 
     def get_san(self):
         """ Return the subject alternative name extension value as a list of string. """
         clazz = type(self).__name__
-        if clazz in ("_CRL", "_KEY"):
+        if clazz in ("CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_san'")
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
@@ -131,7 +125,7 @@ class BASE(ABC):
 
     def get_aki(self):
         clazz = type(self).__name__
-        if clazz in ("_CSR", "_KEY"):
+        if clazz in ("CSR", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_aki'")
         try:
             return self._obj.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_KEY_IDENTIFIER).value.key_identifier.hex()
@@ -140,38 +134,38 @@ class BASE(ABC):
 
     def get_ski(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "_CSR", "_KEY"):
+        if clazz in ("CRL", "CSR", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_ski'")
         return self._obj.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_KEY_IDENTIFIER).value.key_identifier.hex()
 
     def get_signature_algorithm(self):
         clazz = type(self).__name__
-        if clazz in ("_KEY"):
+        if clazz in ("KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_signature_algorithm'")
         return self._obj.signature_algorithm_oid._name
 
     def get_pubkey(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "_KEY"):
+        if clazz in ("CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_pubkey'")
         from .key import KEY
         return KEY(self._obj.public_key())
 
     def get_key_type(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "_KEY"):
+        if clazz in ("CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_key_type'")
         return self.get_pubkey().get_type()
 
     def get_key_size(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "_KEY"):
+        if clazz in ("CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_key_size'")
         return self._obj.public_key().key_size
 
     def get_key_curve(self):
         clazz = type(self).__name__
-        if clazz in ("_CRL", "_KEY"):
+        if clazz in ("CRL", "KEY"):
             raise AttributeError(f"'{clazz}' object has no attribute 'get_key_curve'")
         try:
             return self._obj.public_key().curve.name
@@ -203,7 +197,7 @@ class BASE(ABC):
     :param: fmt: The format of the file. Accepted values: PEM or DER.
     """
 
-    def save(self, filepath, fmt='PEM'):
+    def save(self, filepath: str, fmt: str = 'PEM'):
         assert fmt in ('DER', 'PEM'), 'invalid parameter value: ' + fmt
         encoding = None
         if fmt == 'DER':
@@ -227,7 +221,7 @@ class BASE(ABC):
     :returns: The specified string representation.
     """
 
-    def dump(self, fmt='TEXT'):
+    def dump(self, fmt: str = 'TEXT'):
         assert fmt in ('TEXT', 'DER', 'PEM', 'BASE64'), 'invalid parameter value: ' + fmt
         clazz = type(self).__name__
         if clazz == "KEY":
