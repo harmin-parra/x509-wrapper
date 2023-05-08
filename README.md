@@ -45,9 +45,9 @@ Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) a
 
 ## Prerequisites
 
-Install [pyca/cryptography](https://cryptography.io/en/latest/) package :
+Install [pyca/cryptography](https://cryptography.io/en/latest/) package version 35.0.0 or later :
 
-`pip install cryptography`
+`pip install cryptography>=35.0.0`
 
 ## Usage
 
