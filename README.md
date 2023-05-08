@@ -43,6 +43,12 @@ Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) a
 
 *This issue doesn't affect the parsing of the ECDSA X.509 certificate itself.
 
+## Prerequisites
+
+Install [pyca/cryptography](https://cryptography.io/en/latest/) package :
+
+`pip install cryptography`
+
 ## Usage
 
 ### X.509 Certificate
