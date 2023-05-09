@@ -9,9 +9,6 @@ from . import decode_asn1_bytes
 
 class CRL(BASE):
 
-    def __init__(self):
-        super().__init__()
-
     #
     # Loaders
     #

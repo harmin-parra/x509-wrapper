@@ -7,9 +7,6 @@ from . import BASE, get_general_names
 
 class Certificate(BASE):
 
-    def __init__(self):
-        super().__init__()
-
     #
     # Loaders
     #

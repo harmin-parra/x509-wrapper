@@ -60,7 +60,6 @@ class BASE(ABC):
     #
     # CONSTRUCTORS
     #
-    @abstractmethod
     def __init__(self, obj=None):
         self._obj = obj
 

@@ -21,9 +21,6 @@ def encode_to_der(content, typ=asn1.Numbers.UTF8String):
 
 class CSR(BASE):
 
-    def __init__(self):
-        super().__init__()
-
     #
     # Loaders
     #

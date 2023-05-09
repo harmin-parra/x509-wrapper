@@ -8,9 +8,6 @@ from . import BASE
 
 class KEY(BASE):
 
-    def __init__(self, obj=None):
-        super().__init__(obj)
-
     #
     # Loaders
     #
