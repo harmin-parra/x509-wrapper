@@ -94,7 +94,8 @@ class CRL(BASE):
     # Returns: The CRL entry if present.
     # None if the certificate is not present in the CRL.
     def get_entry(self, serial):
-        assert isinstance(serial, str) or isinstance(serial, int)
+        if not (isinstance(serial, str) or isinstance(serial, int)):
+            raise TypeError(f"invalid parameter type: {type(serial)}. Expected type: 'int' or 'str'")
         if isinstance(serial, str):
             serial = int(serial, base=16)
         entry = self._obj.get_revoked_certificate_by_serial_number(serial)
@@ -106,6 +107,8 @@ class CRL(BASE):
     # DUMP
     #
     def dump(self, fmt='TEXT'):
+        if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
+            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if fmt == "TEXT":
             file = "tmp/file.pem"
             self.save(file, "PEM")

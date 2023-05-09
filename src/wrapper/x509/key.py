@@ -133,6 +133,8 @@ class KEY(BASE):
     # DUMP
     #
     def dump(self, fmt='TEXT'):
+        if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
+            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if fmt == "BASE64":
             lines = self.dump("PEM").splitlines()
             del lines[0]

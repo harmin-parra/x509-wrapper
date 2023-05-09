@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives.serialization import (
     PrivateFormat,
 )
 
+
 # Auxiliary function to decode ASN.1 DER-encoded bytes 
 def decode_asn1_bytes(value):
     decoder = asn1.Decoder()
@@ -197,8 +198,9 @@ class BASE(ABC):
     :param: fmt: The format of the file. Accepted values: PEM or DER.
     """
 
-    def save(self, filepath: str, fmt: str = 'PEM'):
-        assert fmt in ('DER', 'PEM'), 'invalid parameter value: ' + fmt
+    def save(self, filepath, fmt='PEM'):
+        if fmt not in('DER', 'PEM'):
+            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER' or 'PEM'")
         encoding = None
         if fmt == 'DER':
             encoding = Encoding.DER
@@ -221,8 +223,9 @@ class BASE(ABC):
     :returns: The specified string representation.
     """
 
-    def dump(self, fmt: str = 'TEXT'):
-        assert fmt in ('TEXT', 'DER', 'PEM', 'BASE64'), 'invalid parameter value: ' + fmt
+    def dump(self, fmt):
+        if fmt not in('DER', 'PEM', 'BASE64'):
+            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM' or 'BASE64'")
         clazz = type(self).__name__
         if clazz == "KEY":
             return NotImplemented
@@ -230,7 +233,7 @@ class BASE(ABC):
             return self._obj.public_bytes(Encoding.PEM).decode()
         elif fmt == "DER":
             return self._obj.public_bytes(Encoding.DER)
-        elif fmt == "BASE64":
+        else: # fmt == "BASE64":
             lines = self.dump("PEM").splitlines()
             del lines[0]
             del lines[-1]

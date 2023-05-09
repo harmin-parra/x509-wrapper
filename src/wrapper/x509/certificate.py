@@ -14,7 +14,7 @@ class Certificate(BASE):
     # Loaders
     #
     @classmethod
-    def load_pem_file(cls, filepath: str):
+    def load_pem_file(cls, filepath):
         """ Loads a certificate from a PEM format file.
         Args:
             filepath (str): File path of the file to load.
@@ -26,7 +26,7 @@ class Certificate(BASE):
         return obj
 
     @classmethod
-    def load_der_file(cls: type, filepath: str):
+    def load_der_file(cls, filepath):
         """ Loads a certificate from a DER format file. 
         Args:
             filepath (str): File path of the file to load.
@@ -59,7 +59,8 @@ class Certificate(BASE):
             fmt (str, optional): The format on which the serial number should be returned.
                 Possible values: 'HEX' for hexadecimal and 'INT' for bit integer.
         """
-        assert fmt == 'HEX' or fmt == 'INT', 'invalid parameter value: ' + fmt
+        if fmt not in('HEX', 'INT'):
+            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'HEX' or 'INT'")
         if fmt == 'INT':
             return self._obj.serial_number
         else:
@@ -206,6 +207,8 @@ class Certificate(BASE):
     # DUMP
     #
     def dump(self, fmt='TEXT'):
+        if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
+            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if fmt == "TEXT":
             file = "tmp/file.pem"
             self.save(file, "PEM")
