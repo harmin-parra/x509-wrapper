@@ -27,7 +27,17 @@ def get_general_names(names):
         ['DNS:www.example.com', 'IP:127.0.0.1',
         'URI:http://www.example.com', 'Email:email@example.com',
         'RegID:1.3.6.1.4.1.343', 'DirName:CN=machine,O=Company,DC=LDAP',
-        "Other:('1.3.6.1.4.1.311.20.2.3', 'upn@example.com')"]
+        "Other:('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')"]        
+    Keywords for alternaltive names:
+        DNS - for DNS
+        IP - for IP address
+        URI - for URI,
+        Email - for Email / RFC,
+        RegID - for Registered ID,
+        DirName - for Directory Name,
+        UPN - for Universal Principal Name,
+        Mailbox - for SmtpUTF8Mailbox,
+        Other:('<OID>', '<value>')
     """
     result = []
     for e in names.value:
@@ -47,7 +57,13 @@ def get_general_names(names):
             tag, value = decode_asn1_bytes(e.value)
             if tag.nr == 4:
                 value = value.hex()
-            result.append("Other:" + str((e.type_id.dotted_string, value)))
+            oid = e.type_id.dotted_string
+            if oid == "1.3.6.1.4.1.311.20.2.3":
+                result.append("UPN:" + value)
+            elif oid == "1.3.6.1.5.5.7.8.9":
+                result.append("Mailbox:" + value)
+            else:
+                result.append("Other:" + str((oid, value)))
     return result
 
 
