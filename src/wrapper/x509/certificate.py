@@ -58,7 +58,7 @@ class Certificate(BASE):
                 Possible values: 'HEX' for hexadecimal and 'INT' for bit integer.
         """
         if fmt not in('HEX', 'INT'):
-            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'HEX' or 'INT'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'HEX' or 'INT'")
         if fmt == 'INT':
             return self._obj.serial_number
         else:
@@ -206,7 +206,7 @@ class Certificate(BASE):
     #
     def dump(self, fmt='TEXT'):
         if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
-            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"

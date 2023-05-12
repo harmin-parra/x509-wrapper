@@ -134,7 +134,7 @@ class KEY(BASE):
     #
     def dump(self, fmt='TEXT'):
         if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
-            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if self.get_type() == "Other":
             return "Unsupported key type"
 

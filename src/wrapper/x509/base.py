@@ -215,7 +215,7 @@ class BASE(ABC):
 
     def save(self, filepath, fmt='PEM'):
         if fmt not in('DER', 'PEM'):
-            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER' or 'PEM'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER' or 'PEM'")
         encoding = None
         if fmt == 'DER':
             encoding = Encoding.DER

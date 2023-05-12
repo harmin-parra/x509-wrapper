@@ -95,13 +95,13 @@ class CSR(BASE):
             RegID (list[string], optional): The list of Registration IDs to include in the SAN extension
         """
         if file_format not in('DER', 'PEM'):
-            raise ValueError(f"invalid parameter value: {file_format}. Expected value: 'DER' or 'PEM'")
+            raise ValueError(f"invalid parameter value: '{file_format}'. Expected value: 'DER' or 'PEM'")
         if key_type not in('RSA', 'ECDSA'):
-            raise ValueError(f"invalid parameter value: {key_type}. Expected value: 'RSA' or 'ECDSA'")
+            raise ValueError(f"invalid parameter value: '{key_type}'. Expected value: 'RSA' or 'ECDSA'")
         if key_type == "RSA" and key_size % 1024 != 0:
-            raise ValueError(f"invalid parameter value: {key_size}. Expected value: a multiple of 1024")
+            raise ValueError(f"invalid parameter value: '{key_size}'. Expected value: a multiple of 1024")
         if key_type == "ECDSA" and not issubclass(key_curve, ec.EllipticCurve):
-            raise TypeError(f"invalid parameter type: {type(key_curve)}.")
+            raise TypeError(f"invalid parameter type: '{type(key_curve)}'.")
         key = None
         if key_type == 'RSA':
             key = rsa.generate_private_key(public_exponent=65537, key_size=key_size)
@@ -166,7 +166,7 @@ class CSR(BASE):
     #
     def dump(self, fmt='TEXT'):
         if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
-            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"
