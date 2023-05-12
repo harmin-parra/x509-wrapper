@@ -195,8 +195,10 @@ def test_dump_rsa(cert_rsa):
     print(cert_rsa.dump("DER"))
     print(cert_rsa.dump("BASE64"))
     print(cert_rsa.dump("PEM"))
+    print(cert_rsa.dump("TEXT"))
 
 def test_dump_ecdsa(cert_ecdsa):
     print(cert_ecdsa.dump("DER"))
     print(cert_ecdsa.dump("BASE64"))
     print(cert_ecdsa.dump("PEM"))
+    print(cert_ecdsa.dump("TEXT"))

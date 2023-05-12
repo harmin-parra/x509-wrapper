@@ -1,4 +1,5 @@
 import datetime
+import platform
 import subprocess
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -207,11 +208,18 @@ class Certificate(BASE):
         if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
             raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if fmt == "TEXT":
-            file = "tmp/file.pem"
-            self.save(file, "PEM")
-            p = subprocess.run(["openssl", "x509", "-text", "-noout", "-in", file], \
-                               capture_output=True, check=False)
-            p.check_returncode()
-            return p.stdout.decode() 
+            if platform.system() == "Windows":
+                return "Dump in TEXT format not supported on Windows"
+            else:
+                pem = self.dump(fmt = 'PEM')
+                p = subprocess.Popen(["openssl", "x509", "-text", "-noout"], stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+                p.communicate(input=bytes(pem, encoding='utf-8'))
+                p = subprocess.run(["openssl", "x509", "-text", "-noout"], \
+                                   input = pem, capture_output = True, \
+                                   text = True, check = False)
+                if p.returncode != 0:
+                    return p.stdout + '\n' + p.stderr
+                else:
+                    return p.stdout
         else:
-            return super().dump(fmt)
+            return super().dump(fmt = fmt)

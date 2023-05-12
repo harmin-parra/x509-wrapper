@@ -103,3 +103,4 @@ def test_dump(crl1):
     print(crl1.dump("DER"))
     print(crl1.dump("BASE64"))
     print(crl1.dump("PEM"))
+    print(crl1.dump("TEXT"))

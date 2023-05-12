@@ -1,5 +1,6 @@
 import asn1
 import ipaddress
+import platform
 import subprocess
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -167,10 +168,16 @@ class CSR(BASE):
         if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
             raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
         if fmt == "TEXT":
-            file = "tmp/file.pem"
-            self.save(file, "PEM")
-            p = subprocess.run(["openssl", "req", "-text", "-noout", "-in", file], capture_output=True)
-            p.check_returncode()
-            return p.stdout.decode() 
+            if platform.system() == "Windows":
+                return "Dump in TEXT format not supported on Windows"
+            else:
+                pem = self.dump(fmt = 'PEM')
+                p = subprocess.run(["openssl", "req", "-text", "-noout"], \
+                                   input = pem, capture_output = True, \
+                                   text = True, check = False)
+                if p.returncode != 0:
+                    return p.stdout + '\n' + p.stderr
+                else:
+                    return p.stdout
         else:
-            return super().dump(fmt)
+            return super().dump(fmt = fmt)

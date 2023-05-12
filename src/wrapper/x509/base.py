@@ -243,7 +243,7 @@ class BASE(ABC):
             raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM' or 'BASE64'")
         clazz = type(self).__name__
         if clazz == "KEY":
-            return NotImplemented
+            raise NotImplementedError("To be implemented in subclass")
         if fmt == "PEM":
             return self._obj.public_bytes(Encoding.PEM).decode()
         elif fmt == "DER":

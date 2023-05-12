@@ -138,8 +138,10 @@ def test_dump_rsa(csr_rsa):
     print(csr_rsa.dump("DER"))
     print(csr_rsa.dump("BASE64"))
     print(csr_rsa.dump("PEM"))
+    print(csr_rsa.dump("TEXT"))
 
 def test_dump_ecdsa(csr_ecdsa):
     print(csr_ecdsa.dump("DER"))
     print(csr_ecdsa.dump("BASE64"))
     print(csr_ecdsa.dump("PEM"))
+    print(csr_ecdsa.dump("TEXT"))

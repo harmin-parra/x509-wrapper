@@ -92,3 +92,4 @@ def test_dump(delta1):
     print(delta1.dump("DER"))
     print(delta1.dump("BASE64"))
     print(delta1.dump("PEM"))
+    print(delta1.dump("TEXT"))
