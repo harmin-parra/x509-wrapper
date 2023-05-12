@@ -61,26 +61,27 @@ def test_issuer_dn(cert_rsa):
     assert cert_rsa.get_issuer_dn() == "CN=Example CA,O=Company"
 
 def test_serial_number(cert_rsa):
-    assert cert_rsa.get_serial_number('HEX') == "11750F897C3F55F536767023AD0586E404A2B878"
-    assert cert_rsa.get_serial_number('INT') == 99663383760359729003781080908914329781719447672
+    assert cert_rsa.get_serial_number('HEX') == "2A79A6418BE1AC366DE659ADA524BDEB6CFB852B"
+    assert cert_rsa.get_serial_number('INT') == 242490485487376438573919918375649752458632856875
     assert cert_rsa.get_serial_number() == cert_rsa.get_serial_number('HEX')
 
 def test_aki(cert_rsa):
     assert cert_rsa.get_aki() == "c6fdf8c30cf724224c67f5449f3b599a3753ef56"
 
 def test_ski(cert_rsa):
-    assert cert_rsa.get_ski() == "139cae1027dcb5ca457c81558b468a8e69b7c431"
+    assert cert_rsa.get_ski() == "a435986d745138575a7e4d50de8f4c24edaaa8e6"
 
 def test_san(cert_rsa):
     values = cert_rsa.get_san()
     assert 'DNS:www.example.com' in values
     assert 'IP:127.0.0.1' in values
+    assert 'URI:http://www.example.com' in values
     assert 'RegID:1.2.3.4' in values
     assert 'Email:email@example.com' in values
     assert 'DirName:CN=machine,O=Example,DC=LDAP' in values
-    assert "Other:('1.3.6.1.4.1.311.20.2.3', 'upn@example.com')" in values
+    assert "UPN:upn@example.com" in values
+    assert "Mailbox:smtpUTF8Mailbox@example.com" in values
     assert "Other:('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')" in values
-    assert "Other:('1.3.6.1.5.5.7.8.9', 'smtpUTF8Mailbox@example.com')" in values
 
 def test_san_empty(cert_ecdsa):
     assert cert_ecdsa.get_san() is None
@@ -167,6 +168,25 @@ def test_OCSP_nocheck_true(cert_rsa):
 
 def test_OCSP_nocheck_false(cert_ecdsa):
     assert cert_ecdsa.get_ocsp_nocheck() == None
+
+#
+# Test unicode strings
+#
+def test_subjectDn_unicode():
+    cert = Certificate.load_pem_file("test/resources/int1.pem")
+    assert cert.get_subject_dn() == "CN=नाम,OU=इकाई,O=संगठन,C=IN"
+
+def test_san_email_unicode1():
+    cert = Certificate.load_pem_file("test/resources/int2.pem")
+    assert "Mailbox:姓名@例子.cn" in cert.get_san()
+
+def test_san_email_unicode2():
+    cert = Certificate.load_pem_file("test/resources/int3.pem")
+    assert "Mailbox:տիրույթ@example.am" in cert.get_san()
+
+def test_san_upn_unicode():
+    cert = Certificate.load_pem_file("test/resources/upn.pem")
+    assert "UPN:이메일@도메인.kr" in cert.get_san()
 
 #
 # Test dumpers
