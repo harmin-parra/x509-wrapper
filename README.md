@@ -47,7 +47,7 @@ Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) a
 
 Install [pyca/cryptography](https://cryptography.io/en/latest/) package version 35.0.0 or later :
 
-`pip install cryptography>=35.0.0`
+`pip install cryptography>=35.0.0 asn1>=2.7.0`
 
 ## Usage
 
