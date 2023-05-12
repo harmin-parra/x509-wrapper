@@ -8,3 +8,4 @@ from .certificate import Certificate
 from .crl import CRL
 from .csr import CSR
 from .key import KEY
+from .p12 import P12
