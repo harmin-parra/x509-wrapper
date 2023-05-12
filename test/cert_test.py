@@ -189,6 +189,17 @@ def test_san_upn_unicode():
     assert "UPN:이메일@도메인.kr" in cert.get_san()
 
 #
+# Test persistance
+#
+def test_save_rsa(cert_rsa):
+    cert_rsa.save("test/tmp/rsa.pem", "PEM")
+    cert_rsa.save("test/tmp/rsa.crt", "DER")
+    
+def test_save_ecdsa(cert_ecdsa):
+    cert_ecdsa.save("test/tmp/ecdsa.pem", "PEM")
+    cert_ecdsa.save("test/tmp/ecdsa.crt", "DER")
+
+#
 # Test dumpers
 #
 def test_dump_rsa(cert_rsa):

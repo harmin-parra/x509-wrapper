@@ -132,6 +132,17 @@ def test_generate_rdn_csr():
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 #
+# Test persistance
+#
+def test_save_rsa(csr_rsa):
+    csr_rsa.save("test/tmp/rsa.pem.csr", "PEM")
+    csr_rsa.save("test/tmp/rsa.der.csr", "DER")
+    
+def test_save_ecdsa(csr_ecdsa):
+    csr_ecdsa.save("test/tmp/ecdsa.pem.csr", "PEM")
+    csr_ecdsa.save("test/tmp/ecdsa.der.csr", "DER")
+
+#
 # Test dumpers
 #
 def test_dump_rsa(csr_rsa):
