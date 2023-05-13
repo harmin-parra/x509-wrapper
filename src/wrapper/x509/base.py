@@ -22,7 +22,7 @@ def get_general_names(names):
     Args:
         name (list(x509.general_name.GeneralName)): The SAN extensions.
     Returns:
-        list(str): The SAN extensions values in string format.
+        list (str): The SAN extensions values in string format.
     Example:
         ['DNS:www.example.com', 'IP:127.0.0.1',
         'URI:http://www.example.com', 'Email:email@example.com',
@@ -209,8 +209,8 @@ class BASE(ABC):
     def save(self, filepath, fmt='PEM'):
     """ Saves the object into a file.
     Args:
-        filepath: The file path of the object to save.
-        fmt: The format of the file. Accepted values: PEM or DER.
+        filepath (str): The file path of the object to save.
+        fmt (str, optional): The format of the file. Accepted values: PEM or DER.
     """"
         if fmt not in('DER', 'PEM'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM' or 'DER'")
@@ -239,13 +239,13 @@ class BASE(ABC):
     def dump(self, fmt):
     """ Returns a string or bytes representation of the object.
     Args:
-        fmt: The format of the object representation. Accepted values: PEM, DER or BASE64.
+        fmt (str): The format of the object representation. Accepted values: PEM, DER or BASE64.
     Returns:
         The string representation of the object if fmt = 'PEM' or 'BASE64'.
         The bytes representation of the object if fmt = 'DER'.
     """
         if fmt not in('DER', 'PEM', 'BASE64'):
-            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'PEM', 'DER' or 'BASE64'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER' or 'BASE64'")
         clazz = type(self).__name__
         if clazz == "KEY":
             raise NotImplementedError("To be implemented in KEY subclass")
