@@ -1,6 +1,5 @@
 import asn1
 from abc import ABC
-from abc import abstractmethod
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 from cryptography.hazmat.primitives.serialization import (
@@ -85,7 +84,7 @@ class BASE(ABC):
     #
     def load_from_file(self, filepath, load_function, passphrase=None):
         """ Load a cryptography object from a DER (binary) encoded string.
-        Parameters:
+        Args:
             filepath (str): The file path of the file to load.
             load_function (function): The function to use to load the object
             passphrase (str, optional): The passphrase of the file.
@@ -106,7 +105,7 @@ class BASE(ABC):
 
     def load_from_base64(self, b64, load_function, passphrase=None):
         """ Load a cryptography object from a base64 string.
-        Parameters:
+        Args:
             b64 (str): The base64 string to load.
             load_function (function): The function to use to load the object
             passphrase (str, optional): The passphrase of the base64.
@@ -207,16 +206,14 @@ class BASE(ABC):
     #
     # PERSISTANCE
     #
-
-    """
-    Save the cryptography object into a file
-    :param: filepath: The file path of the object to save
-    :param: fmt: The format of the file. Accepted values: PEM or DER.
-    """
-
     def save(self, filepath, fmt='PEM'):
+    """ Saves the cryptography object into a file.
+    Args:
+        filepath: The file path of the object to save.
+        fmt: The format of the file. Accepted values: PEM or DER.
+    """"
         if fmt not in('DER', 'PEM'):
-            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER' or 'PEM'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM' or 'DER'")
         encoding = None
         clazz = type(self).__name__
         if fmt == 'DER':
@@ -239,19 +236,19 @@ class BASE(ABC):
     #
     # DUMP
     #
-
-    """
-    Return a string representation of the cryptography object
-    :param:  fmt: The format of the object representation. Accepted values: TEXT, PEM, DER or BASE64.
-    :returns: The specified string representation.
-    """
-
     def dump(self, fmt):
+    """ Returns a string or bytes representation of the object.
+    Args:
+        fmt: The format of the object representation. Accepted values: PEM, DER or BASE64.
+    Returns:
+        The string representation of the object if fmt = 'PEM' or 'BASE64'.
+        The bytes representation of the object if fmt = 'DER'.
+    """
         if fmt not in('DER', 'PEM', 'BASE64'):
-            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'DER', 'PEM' or 'BASE64'")
+            raise ValueError(f"invalid parameter value: {fmt}. Expected value: 'PEM', 'DER' or 'BASE64'")
         clazz = type(self).__name__
         if clazz == "KEY":
-            raise NotImplementedError("To be implemented in subclass")
+            raise NotImplementedError("To be implemented in KEY subclass")
         if fmt == "PEM":
             return self._obj.public_bytes(Encoding.PEM).decode()
         elif fmt == "DER":
