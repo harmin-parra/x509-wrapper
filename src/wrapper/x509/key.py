@@ -124,12 +124,6 @@ class KEY(BASE):
         return hashlib.sha256(base64.b64decode(self.dump('BASE64'))).hexdigest()
 
     #
-    # OPERATORS OVERLOADING
-    #
-    def __eq__(self, other):
-        super().__eq__(other)
-
-    #
     # DUMP
     #
     def dump(self, fmt='TEXT'):
