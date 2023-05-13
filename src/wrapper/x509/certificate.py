@@ -205,16 +205,16 @@ class Certificate(BASE):
     # DUMP
     #
     def dump(self, fmt='TEXT'):
-    """ Returns a string or bytes representation of the object.
-    'TEXT' format is not supported on Windows.
-    Args:
-        fmt (str, optional): The format of the object representation. Accepted values: PEM, DER, TEXT or BASE64.
-    Returns:
-        The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
-        The bytes representation of the object if fmt = 'DER'.
-    """
-        if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
-            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'BASE64', or 'TEXT'")
+        """ Returns a string or bytes representation of the object.
+        'TEXT' format is not supported on Windows.
+        Args:
+            fmt (str, optional): The format of the object representation. Accepted values: PEM, DER, TEXT or BASE64.
+        Returns:
+            The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
+            The bytes representation of the object if fmt = 'DER'.
+        """
+        if fmt not in('PEM', 'DER', 'TEXT', 'BASE64'):
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'TEXT' or 'BASE64'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"

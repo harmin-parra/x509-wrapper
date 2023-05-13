@@ -19,7 +19,7 @@ class CRL(BASE):
         Args:
             filepath (str): File path of the file to load.
         Returns:
-            The CRL
+            The CRL object.
         """
         obj = cls()
         obj.load_from_file(filepath, x509.load_pem_x509_crl)
@@ -31,7 +31,7 @@ class CRL(BASE):
         Args:
             filepath (str): File path of the file to load.
         Returns:
-            The CRL
+            The CRL object.
         """
         obj = cls()
         obj.load_from_file(filepath, x509.load_der_x509_crl)
@@ -43,7 +43,7 @@ class CRL(BASE):
         Args:
             b64 (str): The base64 string to load.
         Returns:
-            The CRL
+            The CRL object.
         """
         b64 = "-----BEGIN X509 CRL-----\n" + b64 + "\n-----END X509 CRL-----"
         obj = cls()
@@ -105,8 +105,16 @@ class CRL(BASE):
     # DUMP
     #
     def dump(self, fmt='TEXT'):
-        if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
-            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
+        """ Returns a string or bytes representation of the object.
+        'TEXT' format is not supported on Windows.
+        Args:
+            fmt (str, optional): The format of the object representation. Accepted values: PEM, DER, TEXT or BASE64.
+        Returns:
+            The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
+            The bytes representation of the object if fmt = 'DER'.
+        """
+        if fmt not in('PEM', 'DER', 'TEXT', 'BASE64'):
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'TEXT' or 'BASE64'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"

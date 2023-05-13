@@ -207,11 +207,11 @@ class BASE(ABC):
     # PERSISTANCE
     #
     def save(self, filepath, fmt='PEM'):
-    """ Saves the object into a file.
-    Args:
-        filepath (str): The file path of the object to save.
-        fmt (str, optional): The format of the file. Accepted values: PEM or DER.
-    """"
+        """ Saves the object into a file.
+        Args:
+            filepath (str): The file path of the object to save.
+            fmt (str, optional): The format of the file. Accepted values: PEM or DER.
+        """
         if fmt not in('DER', 'PEM'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM' or 'DER'")
         encoding = None
@@ -237,14 +237,14 @@ class BASE(ABC):
     # DUMP
     #
     def dump(self, fmt):
-    """ Returns a string or bytes representation of the object.
-    Args:
-        fmt (str): The format of the object representation. Accepted values: PEM, DER or BASE64.
-    Returns:
-        The string representation of the object if fmt = 'PEM' or 'BASE64'.
-        The bytes representation of the object if fmt = 'DER'.
-    """
-        if fmt not in('DER', 'PEM', 'BASE64'):
+        """ Returns a string or bytes representation of the object.
+        Args:
+            fmt (str): The format of the object representation. Accepted values: PEM, DER or BASE64.
+        Returns:
+            The string representation of the object if fmt = 'PEM' or 'BASE64'.
+            The bytes representation of the object if fmt = 'DER'.
+        """
+        if fmt not in('PEM', 'DER', 'BASE64'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER' or 'BASE64'")
         clazz = type(self).__name__
         if clazz == "KEY":

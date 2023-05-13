@@ -31,7 +31,7 @@ class CSR(BASE):
         Args:
             filepath (str): File path of the file to load.
         Returns:
-            The CSR
+            The CSR object.
         """
         obj = cls()
         obj.load_from_file(filepath, x509.load_pem_x509_csr)
@@ -43,7 +43,7 @@ class CSR(BASE):
         Args:
             filepath (str): File path of the file to load.
         Returns:
-            The CSR
+            The CSR object.
         """
         obj = cls()
         obj.load_from_file(filepath, x509.load_der_x509_csr)
@@ -55,7 +55,7 @@ class CSR(BASE):
         Args:
             b64 (str): The base64 string to load.
         Returns:
-            The CSR
+            The CSR object.
         """
         b64 = "-----BEGIN CERTIFICATE REQUEST-----\n" + b64 + "\n-----END CERTIFICATE REQUEST-----"
         obj = cls()
@@ -68,34 +68,34 @@ class CSR(BASE):
                  CN=None, OU=None, O=None, C=None, Names=None, \
                  DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None):
         """ Generate a CSR and private key.
-        Parameters:
-            file_csr (string): The file path to store the CSR
-            file_key (string): The file path to store the private key.
-            file_format (string): The format on which the CSR should be generated.
+        Args:
+            file_csr (str): The file path to store the CSR
+            file_key (str): The file path to store the private key.
+            file_format (str): The format on which the CSR should be generated.
                 Possible values: 'PEM' and 'DER'.
-            key_type (string): The type of the private key to generate.
+            key_type (str): The type of the private key to generate.
                 Possible values: 'RSA' and 'ECDSA'.
-            key_size (string): The size in bits of the private key to generate.
+            key_size (str): The size in bits of the private key to generate.
                 Possible values: 1024, 2048, 3072 and 4096
                 Only relevant for RSA keys.
             key_curve (cryptography.hazmat.primitives.asymmetric.ec):
                 The Elliptic curve of the ECDSA private key to generate.
                 Only relevant for ECDSA keys.
-            CN (string, optional): The Common Name RDN
-            O (string, optional): The Organization RDN
-            OU (string, optional): The Organization Unit RDN
-            C (string, optional): The Country Code RDN
+            CN (str, optional): The Common Name RDN
+            O  (str, optional): The Organization RDN
+            OU (str, optional): The Organization Unit RDN
+            C  (str, optional): The Country Code RDN
             Names (Dict[wrapper.x509.RDN, str]: Dictionary of RDNs
                 if you need more RDNs apart from CN, O, OU and C
-            DNS (list[string], optional): The list of DNS to include in the SAN extension
-            IP (list[string], optional): The list of IP addresses to include in the SAN extension
-            URI (list[string], optional): The list of URI to include in the SAN extension
-            Email (list[string], optional): The list of Emails to include in the SAN extension
-            UPN (list[string], optional): The list of UPN emails to include in the SAN extension
-            RegID (list[string], optional): The list of Registration IDs to include in the SAN extension
+            DNS (list[str], optional): The list of DNS to include in the SAN extension
+            IP  (list[str], optional): The list of IP addresses to include in the SAN extension
+            URI (list[str], optional): The list of URI to include in the SAN extension
+            Email (list[str], optional): The list of Emails to include in the SAN extension
+            UPN (list[str], optional): The list of UPN emails to include in the SAN extension
+            RegID (list[str], optional): The list of Registration IDs to include in the SAN extension
         """
         if file_format not in('DER', 'PEM'):
-            raise ValueError(f"invalid parameter value: '{file_format}'. Expected value: 'DER' or 'PEM'")
+            raise ValueError(f"invalid parameter value: '{file_format}'. Expected value: 'PEM' or 'DER'")
         if key_type not in('RSA', 'ECDSA'):
             raise ValueError(f"invalid parameter value: '{key_type}'. Expected value: 'RSA' or 'ECDSA'")
         if key_type == "RSA" and key_size % 1024 != 0:
@@ -165,8 +165,16 @@ class CSR(BASE):
     # DUMP
     #
     def dump(self, fmt='TEXT'):
-        if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
-            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
+        """ Returns a string or bytes representation of the object.
+        'TEXT' format is not supported on Windows.
+        Args:
+            fmt (str, optional): The format of the object representation. Accepted values: PEM, DER, TEXT or BASE64.
+        Returns:
+            The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
+            The bytes representation of the object if fmt = 'DER'.
+        """
+        if fmt not in('PEM', 'DER', 'TEXT', 'BASE64'):
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'TEXT' or 'BASE64'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"
