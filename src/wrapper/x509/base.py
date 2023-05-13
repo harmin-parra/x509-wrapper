@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives.serialization import (
     Encoding,
     NoEncryption,
     PrivateFormat,
+    PublicFormat,
 )
 
 
@@ -217,15 +218,22 @@ class BASE(ABC):
         if fmt not in('DER', 'PEM'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER' or 'PEM'")
         encoding = None
+        clazz = type(self).__name__
         if fmt == 'DER':
             encoding = Encoding.DER
         else:
             encoding = Encoding.PEM
         f = open(filepath, "wb")
         if hasattr(self._obj, 'public_bytes') and callable(self._obj.public_bytes):
-            f.write(self._obj.public_bytes(encoding))
+            if clazz == "KEY":
+                f.write(self._obj.public_bytes(encoding, PublicFormat.SubjectPublicKeyInfo))
+            else:
+                f.write(self._obj.public_bytes(encoding))
         if hasattr(self._obj, 'private_bytes') and callable(self._obj.private_bytes):
-            f.write(self._obj.private_bytes(encoding, PrivateFormat.TraditionalOpenSSL, NoEncryption()))
+            if clazz == "KEY":
+                f.write(self._obj.private_bytes(encoding, PrivateFormat.TraditionalOpenSSL, NoEncryption()))
+            else:
+                f.write(self._obj.private_bytes(encoding))                
         f.close()
 
     #
