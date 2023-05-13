@@ -220,8 +220,6 @@ class Certificate(BASE):
                 return "Dump in TEXT format not supported on Windows"
             else:
                 pem = self.dump(fmt = 'PEM')
-                # p = subprocess.Popen(["openssl", "x509", "-text", "-noout"], stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-                # p.communicate(input=bytes(pem, encoding='utf-8'))
                 p = subprocess.run(["openssl", "x509", "-text", "-noout"], \
                                    input = pem, capture_output = True, \
                                    text = True, check = False)
