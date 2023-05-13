@@ -17,7 +17,7 @@ class Certificate(BASE):
         Args:
             filepath (str): File path of the file to load.
         Returns:
-            The Certificate
+            The Certificate object.
         """
         obj = cls()
         obj.load_from_file(filepath, x509.load_pem_x509_certificate)
@@ -29,7 +29,7 @@ class Certificate(BASE):
         Args:
             filepath (str): File path of the file to load.
         Returns:
-            The Certificate
+            The Certificate object.
         """
         obj = cls()
         obj.load_from_file(filepath, x509.load_der_x509_certificate)
@@ -41,7 +41,7 @@ class Certificate(BASE):
         Args:
             b64 (str): The base64 string to load.
         Returns:
-            The Certificate
+            The Certificate object.
         """
         b64 = "-----BEGIN CERTIFICATE-----\n" + b64 + "\n-----END CERTIFICATE-----"
         obj = cls()
@@ -52,7 +52,7 @@ class Certificate(BASE):
     # GETTERS
     #
     def get_serial_number(self, fmt='HEX'):
-        """ Returns the serial number
+        """ Returns the serial number.
         Args:
             fmt (str, optional): The format on which the serial number should be returned.
                 Possible values: 'HEX' for hexadecimal and 'INT' for bit integer.
@@ -205,15 +205,23 @@ class Certificate(BASE):
     # DUMP
     #
     def dump(self, fmt='TEXT'):
+    """ Returns a string or bytes representation of the object.
+    'TEXT' format is not supported on Windows.
+    Args:
+        fmt (str, optional): The format of the object representation. Accepted values: PEM, DER, TEXT or BASE64.
+    Returns:
+        The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
+        The bytes representation of the object if fmt = 'DER'.
+    """
         if fmt not in('DER', 'PEM', 'TEXT', 'BASE64'):
-            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER', 'PEM', 'BASE64', or 'TEXT'")
+            raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'BASE64', or 'TEXT'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"
             else:
                 pem = self.dump(fmt = 'PEM')
-                p = subprocess.Popen(["openssl", "x509", "-text", "-noout"], stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-                p.communicate(input=bytes(pem, encoding='utf-8'))
+                # p = subprocess.Popen(["openssl", "x509", "-text", "-noout"], stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+                # p.communicate(input=bytes(pem, encoding='utf-8'))
                 p = subprocess.run(["openssl", "x509", "-text", "-noout"], \
                                    input = pem, capture_output = True, \
                                    text = True, check = False)
