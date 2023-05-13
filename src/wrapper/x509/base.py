@@ -32,12 +32,12 @@ def get_general_names(names):
         DNS - for DNS
         IP - for IP address
         URI - for URI,
-        Email - for Email / RFC,
+        Email - for Email,
         RegID - for Registered ID,
         DirName - for Directory Name,
         UPN - for Universal Principal Name,
         Mailbox - for SmtpUTF8Mailbox,
-        Other:('<OID>', '<value>')
+        Other:('<OID>', '<value>') - for Other Name
     """
     result = []
     for e in names.value:
