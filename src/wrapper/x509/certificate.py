@@ -56,6 +56,8 @@ class Certificate(BASE):
         Args:
             fmt (str, optional): The format on which the serial number should be returned.
                 Possible values: 'HEX' for hexadecimal and 'INT' for bit integer.
+        Returns:
+            The serial number in the specified format.
         """
         if fmt not in('HEX', 'INT'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'HEX' or 'INT'")

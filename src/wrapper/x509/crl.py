@@ -53,45 +53,41 @@ class CRL(BASE):
     #
     # GETTERS
     #
-    # Informs whether the Delta CRL Indicator extension is present
     def is_delta_crl(self):
+        """ Informs whether the Delta CRL Indicator extension is present. """
         try:
             self._obj.extensions.get_extension_for_oid(ExtensionOID.DELTA_CRL_INDICATOR)
             return True
         except x509.extensions.ExtensionNotFound:
             return False
 
-    # Get the Delta CRL number
-    # Returns: The Delta CRL number
     def get_delta_number(self):
+        """ Returns the Delta CRL number. """
         try:
             return self._obj.extensions.get_extension_for_oid(ExtensionOID.DELTA_CRL_INDICATOR).value.crl_number
         except x509.extensions.ExtensionNotFound:
             return None
 
-    # Get the CRL number
-    # Returns: The CRL number
     def get_crl_number(self):
+        """ Returns the CRL number. """
         return self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_NUMBER).value.crl_number
 
-    # Get the Next Publish extension value as datetime.datetime
     def get_next_publish(self):
+        """ Returns the Next Publish extension value as datetime.datetime """
         for ext in self._obj.extensions:
             if ext.value.oid.dotted_string == "1.3.6.1.4.1.311.21.4":
                 dt = decode_asn1_bytes(ext.value.value)[1]
                 return datetime.datetime.strptime(dt, "%y%m%d%H%M%SZ")
         return None
 
-    # Get the CRL number
-    # Returns: The CRL number
-    def get_number(self):
-        return self.get_crl_number()
-
-    # Get the CRL revocation entry of a certificate
-    # serial: The serial number of the certificate
-    # Returns: The CRL entry if present.
-    # None if the certificate is not present in the CRL.
     def get_entry(self, serial):
+        """ Returns the CRL revocation entry of a certificate.
+        Args:
+            serial (str or int): The serial number of the certificate in hexadecimal (str) or in big integer (int) format.
+        Returns:
+            The CRL entry if the certificate is present in the CRL.
+            None otherwise.
+        """
         if not (isinstance(serial, str) or isinstance(serial, int)):
             raise TypeError(f"invalid parameter type: '{type(serial)}'. Expected type: 'int' or 'str'")
         if isinstance(serial, str):
@@ -140,26 +136,28 @@ class CRL_ENTRY():
         self._obj = obj
 
     def get_reason(self):
+        """ Returns the revocation reason. """
         try:
             return self._obj.extensions.get_extension_for_oid(CRLEntryExtensionOID.CRL_REASON).value.reason._value_
         except x509.extensions.ExtensionNotFound:
             return None
 
     def get_revocation_date(self):
+        """ Returns the revocation date. """
         try:
             return self._obj.revocation_date
         except x509.extensions.ExtensionNotFound:
             return None
 
     def get_invalidity_date(self):
+        """ Returns the invalidity date. """
         try:
             return self._obj.extensions.get_extension_for_oid(CRLEntryExtensionOID.INVALIDITY_DATE).value.invalidity_date
         except x509.extensions.ExtensionNotFound:
             return None
 
-    # Return a representation of CRL entry
-    # entry: The OpenSSL.crypto.Revoked object
     def dump(self):
+        """ Returns a string representation. """
         result = "serial = " + hex(self._obj.serial_number)[2:].upper() + '\n' + "revocation date = " + str(self._obj.revocation_date) + '\n'
         try:
             result += "reason = " + self._obj.extensions.get_extension_for_oid(CRLEntryExtensionOID.CRL_REASON).value.reason._value_ + '\n'
