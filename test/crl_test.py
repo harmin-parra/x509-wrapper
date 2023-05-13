@@ -97,6 +97,13 @@ def test_not_revoked(crl1):
     assert entry is None
 
 #
+# Test persistance
+#
+def test_save(crl1):
+    crl1.save("test/tmp/pem.crl", "PEM")
+    crl1.save("test/tmp/der.crl", "DER")
+
+#
 # Dumpers
 #
 def test_dump(crl1):

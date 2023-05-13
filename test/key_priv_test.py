@@ -77,6 +77,17 @@ def test_ecdsa_key_curve(key_ecdsa):
     assert key_ecdsa.get_curve() == "secp256r1"
 
 #
+# Test persistance
+#
+def test_save_rsa(key_rsa):
+    key_rsa.save("test/tmp/rsa.pem.priv.key", "PEM")
+    key_rsa.save("test/tmp/rsa.der.priv.key", "DER")
+    
+def test_save_ecdsa(key_ecdsa):
+    key_ecdsa.save("test/tmp/ecdsa.pem.priv.key", "PEM")
+    key_ecdsa.save("test/tmp/ecdsa.der.priv.key", "DER")
+
+#
 # Test dumpers
 #
 def test_dump_rsa(key_rsa):
