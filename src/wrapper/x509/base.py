@@ -207,7 +207,7 @@ class BASE(ABC):
     # PERSISTANCE
     #
     def save(self, filepath, fmt='PEM'):
-    """ Saves the cryptography object into a file.
+    """ Saves the object into a file.
     Args:
         filepath: The file path of the object to save.
         fmt: The format of the file. Accepted values: PEM or DER.
