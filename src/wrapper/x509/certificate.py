@@ -2,8 +2,11 @@ import datetime
 import platform
 import subprocess
 from cryptography import x509
+from cryptography.x509.extensions import UserNotice
 from cryptography.x509.oid import ExtensionOID
 from . import BASE, get_general_names
+from cryptography.x509.general_name import UniformResourceIdentifier,\
+    DirectoryName
 
 
 class Certificate(BASE):
@@ -47,6 +50,29 @@ class Certificate(BASE):
         obj = cls()
         obj.load_from_base64(b64, x509.load_pem_x509_certificate)
         return obj
+
+    #
+    # AUXILIARY METHODS
+    #
+    def _get_distribution_points(self, extensionOID):
+        result = []
+        try:
+            ext = self._obj.extensions.get_extension_for_oid(extensionOID).value
+            for e in ext:
+                print(e)
+                if e.full_name is not None:
+                    for n in e.full_name:
+                        if isinstance(n, UniformResourceIdentifier):
+                            result.append(('URI', n.value))
+                        elif isinstance(n, DirectoryName):
+                            result.append(('DirName', n.value.rfc4514_string()))
+                if e.relative_name is not None:
+                    result.append(('RelativeName', e.relative_name.rfc4514_string()))
+                if e.crl_issuer is not None:
+                    print(('CRLissuer', e.crl_issuer[0].value.rfc4514_string()))
+        except x509.extensions.ExtensionNotFound:
+            return None
+        return result
 
     #
     # GETTERS
@@ -114,6 +140,7 @@ class Certificate(BASE):
 
     def get_crl_dp(self):
         """ Returns the CRL distribution point extension value as a list of strings. """
+        # return self._get_distribution_points(ExtensionOID.CRL_DISTRIBUTION_POINTS)
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS).value
@@ -125,6 +152,7 @@ class Certificate(BASE):
 
     def get_delta_dp(self):
         """ Returns the Delta CRL distribution point extension value as a list of strings. """
+        # return self._get_distribution_points(ExtensionOID.FRESHEST_CRL)
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.FRESHEST_CRL).value
@@ -140,7 +168,7 @@ class Certificate(BASE):
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
             for e in ext:
-                result.append(e.access_method._name + ": " + e.access_location.value)
+                result.append((e.access_method._name, e.access_location.value))
         except x509.extensions.ExtensionNotFound:
             return None
         return result
@@ -186,19 +214,26 @@ class Certificate(BASE):
         result = []
         try:
             ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.CERTIFICATE_POLICIES).value
-            for e in ext:
-                '''
-                if type(e._policy_qualifiers) == list:
-                    if type(e._policy_qualifiers[0]) == cryptography.x509.extensions.UserNotice:
-                        print(e._policy_qualifiers[0].explicit_text)
-                        print(e._policy_qualifiers[0].notice_reference.organization)
-                        print(e._policy_qualifiers[0].notice_reference.notice_numbers)
-                '''
-                oid = e._policy_identifier.dotted_string
-                value = "OID: " + oid
-                if e._policy_qualifiers is not None:
-                    value += " - " + str(e._policy_qualifiers)
-                result.append(value)
+            for p in ext:
+                value = []
+                oid = p._policy_identifier.dotted_string
+                value.append(oid)
+                if p._policy_qualifiers is not None:
+                    for q in p._policy_qualifiers:
+                        if (type(q) == str):
+                            value.append(('csp', q))
+                        else: # type(q) == UserNotice:
+                            org = None
+                            numbers = None
+                            if hasattr(q.notice_reference, 'organization'):
+                                org = q.notice_reference.organization
+                            if hasattr(q.notice_reference, 'notice_numbers'):
+                                numbers = q.notice_reference.notice_numbers
+                            notice = (q.explicit_text, org, numbers)
+                            value.append(('notice', notice))
+                    result.append(tuple(value))
+                else:
+                    result.append(tuple(value))
         except x509.extensions.ExtensionNotFound:
             return None
         return result

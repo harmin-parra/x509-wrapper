@@ -73,22 +73,22 @@ def test_ski(cert_rsa):
 
 def test_san(cert_rsa):
     values = cert_rsa.get_san()
-    assert 'DNS:www.example.com' in values
-    assert 'IP:127.0.0.1' in values
-    assert 'URI:http://www.example.com' in values
-    assert 'RegID:1.2.3.4' in values
-    assert 'Email:email@example.com' in values
-    assert 'DirName:CN=machine,O=Example,DC=LDAP' in values
-    assert "UPN:upn@example.com" in values
-    assert "Mailbox:smtpUTF8Mailbox@example.com" in values
-    assert "Other:('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')" in values
+    assert ('DNS', 'www.example.com') in values
+    assert ('IP','127.0.0.1') in values
+    assert ('URI','http://www.example.com') in values
+    assert ('RegID','1.2.3.4') in values
+    assert ('Email','email@example.com') in values
+    assert ('DirName','CN=machine,O=Example,DC=LDAP') in values
+    assert ('UPN','upn@example.com') in values
+    assert ('Mailbox','smtpUTF8Mailbox@example.com') in values
+    assert ('Other', ('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')) in values
 
 def test_san_empty(cert_ecdsa):
     assert cert_ecdsa.get_san() is None
 
 def test_ian(cert_rsa):
     values = cert_rsa.get_ian()
-    assert 'Email:admin@example.com' in values
+    assert ('Email', 'admin@example.com') in values
 
 def test_ian_empty(cert_ecdsa):
     assert cert_ecdsa.get_ian() is None
@@ -129,8 +129,8 @@ def test_delta_dp_empty(cert_ecdsa):
 
 def test_authority_info_access(cert_rsa):
     values = cert_rsa.get_authority_info_access()
-    assert 'OCSP: http://localhost/ocsp' in values
-    assert 'caIssuers: http://localhost/ca' in values
+    assert ('OCSP', 'http://localhost/ocsp') in values
+    assert ('caIssuers', 'http://localhost/ca') in values
 
 def test_authority_info_access_empty(cert_ecdsa):
     assert cert_ecdsa.get_authority_info_access() is None
@@ -169,6 +169,10 @@ def test_OCSP_nocheck_true(cert_rsa):
 def test_OCSP_nocheck_false(cert_ecdsa):
     assert cert_ecdsa.get_ocsp_nocheck() == None
 
+def test_policies(cert_rsa):
+    assert ('1.3.6.1.4.1.6189.5.1.1.1.1', ('csp', 'http://localhost/csp'), ('notice', ('txt1', 'org1', [1]))) in cert_rsa.get_policies()
+    assert ('1.3.6.1.4.1.6189.5.1.1.1.2', ('notice', ('txt2', 'org2', []))) in cert_rsa.get_policies()
+    assert ('1.3.6.1.4.1.6189.5.1.1.1.3', ('notice', ('txt3', None, None))) in cert_rsa.get_policies()
 #
 # Test unicode strings
 #
@@ -178,15 +182,15 @@ def test_subjectDn_unicode():
 
 def test_san_email_unicode1():
     cert = Certificate.load_pem_file("test/resources/int2.pem")
-    assert "Mailbox:姓名@例子.cn" in cert.get_san()
+    assert ('Mailbox', '姓名@例子.cn') in cert.get_san()
 
 def test_san_email_unicode2():
     cert = Certificate.load_pem_file("test/resources/int3.pem")
-    assert "Mailbox:տիրույթ@example.am" in cert.get_san()
+    assert ('Mailbox', 'տիրույթ@example.am') in cert.get_san()
 
 def test_san_upn_unicode():
     cert = Certificate.load_pem_file("test/resources/upn.pem")
-    assert "UPN:이메일@도메인.kr" in cert.get_san()
+    assert ('UPN', '이메일@도메인.kr') in cert.get_san()
 
 #
 # Test persistance

@@ -22,12 +22,12 @@ def get_general_names(names):
     Args:
         name (list(x509.general_name.GeneralName)): The SAN extensions.
     Returns:
-        list (str): The SAN extensions values in string format.
+        list (tuple(str, str) or tuple('Other', tuple(str, str))): The SAN extensions values as list of tuples.
     Example:
-        ['DNS:www.example.com', 'IP:127.0.0.1',
-        'URI:http://www.example.com', 'Email:email@example.com',
-        'RegID:1.3.6.1.4.1.343', 'DirName:CN=machine,O=Company,DC=LDAP',
-        "Other:('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')"]        
+        [('DNS', 'www.example.com'), ('IP', '127.0.0.1'),
+        ('URI', 'http://www.example.com'), ('Email', 'email@example.com'),
+        ('RegID', '1.3.6.1.4.1.343'), ('DirName', 'CN=machine,O=Company,DC=LDAP'),
+        ('Other', ('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9'))]        
     Keywords for alternaltive names:
         DNS - for DNS
         IP - for IP address
@@ -37,33 +37,33 @@ def get_general_names(names):
         DirName - for Directory Name,
         UPN - for Universal Principal Name,
         Mailbox - for SmtpUTF8Mailbox,
-        Other:('<OID>', '<value>') - for Other Name
+        Other, ('<OID>', '<value>') - for Other Name
     """
     result = []
     for e in names.value:
         if type(e) == x509.general_name.DNSName:
-            result.append("DNS:" + e.value)
+            result.append(("DNS", e.value))
         if type(e) == x509.general_name.IPAddress:
-            result.append("IP:" + str(e.value))
+            result.append(("IP", str(e.value)))
         if type(e) == x509.general_name.UniformResourceIdentifier:
-            result.append("URI:" + e.value)
+            result.append(("URI", e.value))
         if type(e) == x509.general_name.RFC822Name:
-            result.append("Email:" + e.value)
+            result.append(("Email", e.value))
         if type(e) == x509.general_name.DirectoryName:
-            result.append("DirName:" + e.value.rfc4514_string())
+            result.append(("DirName", e.value.rfc4514_string()))
         if type(e) == x509.general_name.RegisteredID:
-            result.append("RegID:" + e.value.dotted_string)
+            result.append(("RegID", e.value.dotted_string))
         if type(e) == x509.general_name.OtherName:
             tag, value = decode_asn1_bytes(e.value)
             if tag.nr == 4:
                 value = value.hex()
             oid = e.type_id.dotted_string
             if oid == "1.3.6.1.4.1.311.20.2.3":
-                result.append("UPN:" + value)
+                result.append(("UPN", value))
             elif oid == "1.3.6.1.5.5.7.8.9":
-                result.append("Mailbox:" + value)
+                result.append(("Mailbox", value))
             else:
-                result.append("Other:" + str((oid, value)))
+                result.append(("Other", ((oid, value))))
     return result
 
 

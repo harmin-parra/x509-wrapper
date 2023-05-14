@@ -61,15 +61,15 @@ def test_subject_dn(csr_rsa):
 
 def test_san(csr_rsa):
     values = csr_rsa.get_san()
-    assert 'DNS:www.example.com' in values
-    assert 'IP:127.0.0.1' in values
-    assert 'URI:http://www.example.com' in values
-    assert 'RegID:1.3.6.1.4.1.343' in values
-    assert 'Email:email@example.com' in values
-    assert 'DirName:CN=machine,O=Company,DC=LDAP' in values
-    assert "UPN:upn@example.com" in values
-    assert "Mailbox:smtpUTF8Mailbox@example.com" in values
-    assert "Other:('1.3.6.1.4.1.311.25.1', '23831111111111fb772f94')" in values
+    assert ('DNS', 'www.example.com') in values
+    assert ('IP', '127.0.0.1') in values
+    assert ('URI', 'http://www.example.com') in values
+    assert ('RegID', '1.3.6.1.4.1.343') in values
+    assert ('Email', 'email@example.com') in values
+    assert ('DirName', 'CN=machine,O=Company,DC=LDAP') in values
+    assert ('UPN', 'upn@example.com') in values
+    assert ('Mailbox', 'smtpUTF8Mailbox@example.com') in values
+    assert ('Other', ('1.3.6.1.4.1.311.25.1', '23831111111111fb772f94')) in values
 
 def test_rsa_key_type(csr_rsa):
     assert csr_rsa.get_key_type() == "RSA"
