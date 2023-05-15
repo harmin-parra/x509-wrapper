@@ -59,7 +59,7 @@ class Certificate(BASE):
         try:
             ext = self._obj.extensions.get_extension_for_oid(extensionOID).value
             for e in ext:
-                print(e)
+                # print(e)
                 if e.full_name is not None:
                     for n in e.full_name:
                         if isinstance(n, UniformResourceIdentifier):
@@ -68,8 +68,10 @@ class Certificate(BASE):
                             result.append(('DirName', n.value.rfc4514_string()))
                 if e.relative_name is not None:
                     result.append(('RelativeName', e.relative_name.rfc4514_string()))
+                """
                 if e.crl_issuer is not None:
-                    print(('CRLissuer', e.crl_issuer[0].value.rfc4514_string()))
+                    result.append(('CRLissuer', e.crl_issuer[0].value.rfc4514_string()))
+                """
         except x509.extensions.ExtensionNotFound:
             return None
         return result
@@ -140,27 +142,11 @@ class Certificate(BASE):
 
     def get_crl_dp(self):
         """ Returns the CRL distribution point extension value as a list of strings. """
-        # return self._get_distribution_points(ExtensionOID.CRL_DISTRIBUTION_POINTS)
-        result = []
-        try:
-            ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.CRL_DISTRIBUTION_POINTS).value
-            for e in ext:
-                result.append(str(e.full_name[0].value))
-        except x509.extensions.ExtensionNotFound:
-            return None
-        return result
+        return self._get_distribution_points(ExtensionOID.CRL_DISTRIBUTION_POINTS)
 
     def get_delta_dp(self):
         """ Returns the Delta CRL distribution point extension value as a list of strings. """
-        # return self._get_distribution_points(ExtensionOID.FRESHEST_CRL)
-        result = []
-        try:
-            ext = self._obj.extensions.get_extension_for_oid(ExtensionOID.FRESHEST_CRL).value
-            for e in ext:
-                result.append(e.full_name[0].value)
-        except x509.extensions.ExtensionNotFound:
-            return None
-        return result
+        return self._get_distribution_points(ExtensionOID.FRESHEST_CRL)
 
     def get_authority_info_access(self):
         """ Returns the Authority Information Access extension value as a list of strings. """
