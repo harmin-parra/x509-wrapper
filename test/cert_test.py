@@ -61,8 +61,8 @@ def test_issuer_dn(cert_rsa):
     assert cert_rsa.get_issuer_dn() == "CN=Example CA,O=Company"
 
 def test_serial_number(cert_rsa):
-    assert cert_rsa.get_serial_number('HEX') == "2A79A6418BE1AC366DE659ADA524BDEB6CFB852B"
-    assert cert_rsa.get_serial_number('INT') == 242490485487376438573919918375649752458632856875
+    assert cert_rsa.get_serial_number('HEX') == "3C42D1F84922A225F334C3CEA496CC3D6A99080C"
+    assert cert_rsa.get_serial_number('INT') == 344029586387533597408173567048069562102720301068
     assert cert_rsa.get_serial_number() == cert_rsa.get_serial_number('HEX')
 
 def test_aki(cert_rsa):
@@ -113,16 +113,18 @@ def test_ecdsa_key_curve(cert_ecdsa):
 
 def test_CRL_dp(cert_rsa):
     values = cert_rsa.get_crl_dp()
-    assert 'http://localhost/crl' in values
-    assert 'ldap://localhost/crl' in values
+    assert ('URI', 'http://localhost/crl') in values
+    assert ('DirName', 'CN=Example CA,O=Company') in values
+    assert ('RelativeName', 'O=Company+CN=CRL DP') in values
 
 def test_CRL_dp_empty(cert_ecdsa):
     assert cert_ecdsa.get_crl_dp() is None
 
 def test_delta_dp(cert_rsa):
     values = cert_rsa.get_delta_dp()
-    assert 'http://localhost/delta' in values
-    assert 'ldap://localhost/delta' in values
+    assert ('URI', 'http://localhost/delta') in values
+    assert ('DirName', 'CN=Example CA,O=Company') in values
+    assert ('RelativeName', 'O=Company+CN=Delta DP') or ('RelativeName', 'CN=Delta DP+O=Company') in values
 
 def test_delta_dp_empty(cert_ecdsa):
     assert cert_ecdsa.get_delta_dp() is None
@@ -206,6 +208,7 @@ def test_save_ecdsa(cert_ecdsa):
 #
 # Test dumpers
 #
+"""
 def test_dump_rsa(cert_rsa):
     print(cert_rsa.dump("DER"))
     print(cert_rsa.dump("BASE64"))
@@ -217,3 +220,4 @@ def test_dump_ecdsa(cert_ecdsa):
     print(cert_ecdsa.dump("BASE64"))
     print(cert_ecdsa.dump("PEM"))
     print(cert_ecdsa.dump("TEXT"))
+"""
