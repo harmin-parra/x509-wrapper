@@ -70,6 +70,11 @@ class Certificate(BASE):
                 """
                 if e.crl_issuer is not None:
                     result.append(('CRLissuer', e.crl_issuer[0].value.rfc4514_string()))
+                if e.reasons is not None:
+                    reasons = []
+                    for r in e.reasons:
+                        reasons.append(r._value_)
+                    result.append(('Reasons', reasons))
                 """
         except x509.extensions.ExtensionNotFound:
             return None
