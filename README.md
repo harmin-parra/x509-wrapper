@@ -29,10 +29,6 @@ No support for CSR generation with the following Subject Alternative Name (SAN) 
 
 *This limitation doesn't apply to CSR loaders.
 
-### Certificate Policies extension
-
-The extraction of Certificate Policies extension needs improvement.
-
 ### Loading of ECDSA private and public keys
 
 `pyca/cryptography` doesn't support ECDSA keys with explicit parameters ([#7339](https://github.com/pyca/cryptography/issues/7339), [#5659](https://github.com/pyca/cryptography/issues/5659)).
