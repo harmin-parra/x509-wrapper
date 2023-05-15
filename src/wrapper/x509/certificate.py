@@ -59,7 +59,6 @@ class Certificate(BASE):
         try:
             ext = self._obj.extensions.get_extension_for_oid(extensionOID).value
             for e in ext:
-                # print(e)
                 if e.full_name is not None:
                     for n in e.full_name:
                         if isinstance(n, UniformResourceIdentifier):

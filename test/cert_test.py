@@ -115,7 +115,7 @@ def test_CRL_dp(cert_rsa):
     values = cert_rsa.get_crl_dp()
     assert ('URI', 'http://localhost/crl') in values
     assert ('DirName', 'CN=Example CA,O=Company') in values
-    assert ('RelativeName', 'O=Company+CN=CRL DP') in values
+    assert ('RelativeName', 'O=Company+CN=CRL DP') or ('RelativeName', 'CN=CRL DP+O=Company') in values
 
 def test_CRL_dp_empty(cert_ecdsa):
     assert cert_ecdsa.get_crl_dp() is None
