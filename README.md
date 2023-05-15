@@ -4,7 +4,7 @@
 
 It allows to query X.509 cryptography object attributes in a fast and easy way.
 
-The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean` and `list`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
+The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean`, `list` and `tuples`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
 
 ## Supported X.509 cryptography objects
 - Certificate
