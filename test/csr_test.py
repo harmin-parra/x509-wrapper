@@ -3,7 +3,7 @@ from wrapper.x509 import CSR, RDN
 import cryptography.x509
 import pytest
 
-    
+
 #
 # Test loaders
 #
@@ -137,7 +137,7 @@ def test_generate_rdn_csr():
 def test_save_rsa(csr_rsa):
     csr_rsa.save("test/tmp/rsa.pem.csr", "PEM")
     csr_rsa.save("test/tmp/rsa.der.csr", "DER")
-    
+
 def test_save_ecdsa(csr_ecdsa):
     csr_ecdsa.save("test/tmp/ecdsa.pem.csr", "PEM")
     csr_ecdsa.save("test/tmp/ecdsa.der.csr", "DER")

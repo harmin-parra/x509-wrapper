@@ -164,7 +164,7 @@ def test_extended_key_usage(cert_rsa):
 def test_has_expired_true(cert_ecdsa):
     assert cert_ecdsa.has_expired() == True
     pass
-                     
+
 def test_OCSP_nocheck_true(cert_rsa):
     assert cert_rsa.get_ocsp_nocheck() == True
 
@@ -200,7 +200,7 @@ def test_san_upn_unicode():
 def test_save_rsa(cert_rsa):
     cert_rsa.save("test/tmp/rsa.pem", "PEM")
     cert_rsa.save("test/tmp/rsa.crt", "DER")
-    
+
 def test_save_ecdsa(cert_ecdsa):
     cert_ecdsa.save("test/tmp/ecdsa.pem", "PEM")
     cert_ecdsa.save("test/tmp/ecdsa.crt", "DER")
