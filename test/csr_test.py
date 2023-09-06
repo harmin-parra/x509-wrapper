@@ -94,10 +94,10 @@ def test_ecdsa_key_curve(csr_ecdsa):
 #
 def test_generate_rsa_csr():
     CSR.generate(
-        file_csr="test/tmp/rsa.csr", file_key="test/tmp/rsa.key", \
-        key_type='RSA', key_size=1024, \
-        CN='test', OU='test', O='test', C='FR',\
-        DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'], \
+        file_csr="test/tmp/rsa.csr", file_key="test/tmp/rsa.key",
+        key_type='RSA', key_size=1024,
+        CN='test', OU='test', O='test', C='FR',
+        DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'],
         Email=['test@email.com'], IP=["127.0.0.1"]
     )
     csr = CSR.load_pem_file("test/tmp/rsa.csr")
@@ -105,10 +105,10 @@ def test_generate_rsa_csr():
 
 def test_generate_ecdsa_csr():
     CSR.generate(
-        file_csr="test/tmp/ecdsa.csr", file_key="test/tmp/ecdsa.key", \
-        key_type='ECDSA', key_curve=ec.BrainpoolP512R1, \
-        CN='test', OU='test', O='test', C='FR',\
-        DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'], \
+        file_csr="test/tmp/ecdsa.csr", file_key="test/tmp/ecdsa.key",
+        key_type='ECDSA', key_curve=ec.BrainpoolP512R1,
+        CN='test', OU='test', O='test', C='FR',
+        DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'],
         Email=['test@email.com'], IP=["127.0.0.1"]
     )
     csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
@@ -124,8 +124,8 @@ def test_generate_rdn_csr():
         RDN.Initials: 'Initials',
     }
     CSR.generate(
-        file_csr="test/tmp/rdn.csr", file_key="test/tmp/rdn.key", \
-        key_type='ECDSA', key_curve=ec.BrainpoolP512R1, \
+        file_csr="test/tmp/rdn.csr", file_key="test/tmp/rdn.key",
+        key_type='ECDSA', key_curve=ec.BrainpoolP512R1,
         Names=names,
     )
     csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
