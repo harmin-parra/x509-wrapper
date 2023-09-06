@@ -28,7 +28,7 @@ def get_general_names(names):
         [('DNS', 'www.example.com'), ('IP', '127.0.0.1'),
         ('URI', 'http://www.example.com'), ('Email', 'email@example.com'),
         ('RegID', '1.3.6.1.4.1.343'), ('DirName', 'CN=machine,O=Company,DC=LDAP'),
-        ('Other', ('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9'))]        
+        ('Other', ('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9'))]
     Keywords for alternaltive names:
         DNS - for DNS
         IP - for IP address
