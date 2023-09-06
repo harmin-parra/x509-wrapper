@@ -1,4 +1,11 @@
 .project
 .pydevproject
 .settings/
+.idea/
+
+**/__pycache__
+**/.pytest_cache/
+**/*.pyc
+
+test/tmp
 
