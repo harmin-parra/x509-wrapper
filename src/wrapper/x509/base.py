@@ -10,12 +10,13 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 
-# Auxiliary function to decode ASN.1 DER-encoded bytes 
+# Auxiliary function to decode ASN.1 DER-encoded bytes
 def decode_asn1_bytes(value):
     decoder = asn1.Decoder()
     decoder.start(value)
     tag, value = decoder.read()
     return tag, value
+
 
 def get_general_names(names):
     """ Extract the SAN extensions values of Certificates and CSR objects.
@@ -41,19 +42,19 @@ def get_general_names(names):
     """
     result = []
     for e in names.value:
-        if type(e) == x509.general_name.DNSName:
+        if isinstance(e, x509.general_name.DNSName):
             result.append(("DNS", e.value))
-        if type(e) == x509.general_name.IPAddress:
+        if isinstance(e, x509.general_name.IPAddress):
             result.append(("IP", str(e.value)))
-        if type(e) == x509.general_name.UniformResourceIdentifier:
+        if isinstance(e, x509.general_name.UniformResourceIdentifier):
             result.append(("URI", e.value))
-        if type(e) == x509.general_name.RFC822Name:
+        if isinstance(e, x509.general_name.RFC822Name):
             result.append(("Email", e.value))
-        if type(e) == x509.general_name.DirectoryName:
+        if isinstance(e, x509.general_name.DirectoryName):
             result.append(("DirName", e.value.rfc4514_string()))
-        if type(e) == x509.general_name.RegisteredID:
+        if isinstance(e, x509.general_name.RegisteredID):
             result.append(("RegID", e.value.dotted_string))
-        if type(e) == x509.general_name.OtherName:
+        if isinstance(e, x509.general_name.OtherName):
             tag, value = decode_asn1_bytes(e.value)
             if tag.nr == 4:
                 value = value.hex()
@@ -212,7 +213,7 @@ class BASE(ABC):
             filepath (str): The file path of the object to save.
             fmt (str, optional): The format of the file. Accepted values: PEM or DER.
         """
-        if fmt not in('DER', 'PEM'):
+        if fmt not in ('DER', 'PEM'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM' or 'DER'")
         encoding = None
         clazz = type(self).__name__
@@ -230,7 +231,7 @@ class BASE(ABC):
             if clazz == "KEY":
                 f.write(self._obj.private_bytes(encoding, PrivateFormat.TraditionalOpenSSL, NoEncryption()))
             else:
-                f.write(self._obj.private_bytes(encoding))                
+                f.write(self._obj.private_bytes(encoding))
         f.close()
 
     #
@@ -244,7 +245,7 @@ class BASE(ABC):
             The string representation of the object if fmt = 'PEM' or 'BASE64'.
             The bytes representation of the object if fmt = 'DER'.
         """
-        if fmt not in('PEM', 'DER', 'BASE64'):
+        if fmt not in ('PEM', 'DER', 'BASE64'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER' or 'BASE64'")
         clazz = type(self).__name__
         if clazz == "KEY":
@@ -253,7 +254,7 @@ class BASE(ABC):
             return self._obj.public_bytes(Encoding.PEM).decode()
         elif fmt == "DER":
             return self._obj.public_bytes(Encoding.DER)
-        else: # fmt == "BASE64":
+        else:  # fmt == "BASE64":
             lines = self.dump("PEM").splitlines()
             del lines[0]
             del lines[-1]

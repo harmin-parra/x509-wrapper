@@ -16,7 +16,7 @@ class KEY(BASE):
     #
     @classmethod
     def load_public_key_pem_file(cls, filepath):
-        """ Loads a public key from a PEM format file. 
+        """ Loads a public key from a PEM format file.
         Args:
             filepath (str): File path of the file to load.
         Returns:
@@ -28,7 +28,7 @@ class KEY(BASE):
 
     @classmethod
     def load_public_key_der_file(cls, filepath):
-        """ Loads a public key from a DER format file. 
+        """ Loads a public key from a DER format file.
         Args:
             filepath (str): File path of the file to load.
         Returns:
@@ -36,7 +36,7 @@ class KEY(BASE):
         """
         obj = cls()
         obj.load_from_file(filepath, serialization.load_der_public_key)
-        return obj    
+        return obj
 
     @classmethod
     def load_public_key_base64(cls, b64):
@@ -46,14 +46,16 @@ class KEY(BASE):
         Returns:
             The public key object.
         """
-        b64 = "-----BEGIN PUBLIC KEY-----\n" + b64 + "\n-----END PUBLIC KEY-----"
+        b64 = "-----BEGIN PUBLIC KEY-----" + '\n' + \
+              b64 + '\n' + \
+              "-----END PUBLIC KEY-----"
         obj = cls()
         obj.load_from_base64(b64, serialization.load_pem_public_key)
         return obj
 
     @classmethod
     def load_private_key_pem_file(cls, filepath, passphrase=None):
-        """ Loads a private key from a PEM format file. 
+        """ Loads a private key from a PEM format file.
         Args:
             filepath (str): File path of the file to load.
         Returns:
@@ -65,7 +67,7 @@ class KEY(BASE):
 
     @classmethod
     def load_private_key_der_file(cls, filepath, passphrase=None):
-        """ Loads a private key from a DER format file. 
+        """ Loads a private key from a DER format file.
         Args:
             filepath (str): File path of the file to load.
         Returns:
@@ -83,7 +85,9 @@ class KEY(BASE):
         Returns:
             The private key object.
         """
-        b64 = b64 = "-----BEGIN RSA PRIVATE KEY-----\n" + b64 + "\n-----END RSA PRIVATE KEY-----"
+        b64 = b64 = "-----BEGIN RSA PRIVATE KEY-----" + '\n' + \
+                    b64 + '\n' + \
+                    "-----END RSA PRIVATE KEY-----"
         obj = cls()
         obj.load_from_base64(b64, serialization.load_pem_private_key)
         return obj
@@ -135,57 +139,57 @@ class KEY(BASE):
             The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
             The bytes representation of the object if fmt = 'DER'.
         """
-        if fmt not in('PEM', 'DER', 'TEXT', 'BASE64'):
+        if fmt not in ('PEM', 'DER', 'TEXT', 'BASE64'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'TEXT' or 'BASE64'")
         if self.get_type() == "Other":
             return "Unsupported key type"
 
         if fmt == "BASE64":
-            lines = self.dump(fmt = "PEM").splitlines()
+            lines = self.dump(fmt="PEM").splitlines()
             del lines[0]
             del lines[-1]
             return ''.join(lines)
 
         if fmt == 'PEM':
             if isinstance(self._obj, RSAPublicKey) or isinstance(self._obj, EllipticCurvePublicKey):
-                return self._obj.public_bytes(Encoding.PEM, \
+                return self._obj.public_bytes(Encoding.PEM,
                                               format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()
             elif isinstance(self._obj, RSAPrivateKey) or isinstance(self._obj, EllipticCurvePrivateKey):
-                return self._obj.private_bytes(Encoding.PEM, \
-                                               format=serialization.PrivateFormat.TraditionalOpenSSL, \
+                return self._obj.private_bytes(Encoding.PEM,
+                                               format=serialization.PrivateFormat.TraditionalOpenSSL,
                                                encryption_algorithm=serialization.NoEncryption()).decode()
 
         if fmt == 'DER':
             if isinstance(self._obj, RSAPublicKey) or isinstance(self._obj, EllipticCurvePublicKey):
-                return self._obj.public_bytes(Encoding.DER, \
+                return self._obj.public_bytes(Encoding.DER,
                                               format=serialization.PublicFormat.SubjectPublicKeyInfo)
             elif isinstance(self._obj, RSAPrivateKey) or isinstance(self._obj, EllipticCurvePrivateKey):
-                return self._obj.private_bytes(Encoding.DER, \
-                                               format=serialization.PrivateFormat.TraditionalOpenSSL, \
+                return self._obj.private_bytes(Encoding.DER,
+                                               format=serialization.PrivateFormat.TraditionalOpenSSL,
                                                encryption_algorithm=serialization.NoEncryption())
 
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"
             else:
-                pem = self.dump(fmt = 'PEM')
+                pem = self.dump(fmt='PEM')
                 p = None
                 if isinstance(self._obj, RSAPublicKey):
-                    p = subprocess.run(["openssl", "pkey", "-text", "-noout", "-pubin"], \
-                                       input = pem, capture_output = True, \
-                                       text = True, check = False)
+                    p = subprocess.run(["openssl", "pkey", "-text", "-noout", "-pubin"],
+                                       input=pem, capture_output=True,
+                                       text=True, check=False)
                 elif isinstance(self._obj, RSAPrivateKey):
-                    p = subprocess.run(["openssl", "rsa", "-text", "-noout"], \
-                                       input = pem, capture_output = True, \
-                                       text = True, check = False)
+                    p = subprocess.run(["openssl", "rsa", "-text", "-noout"],
+                                       input=pem, capture_output=True,
+                                       text=True, check=False)
                 elif isinstance(self._obj, EllipticCurvePublicKey):
-                    p = subprocess.run(["openssl", "ec", "-text", "-noout", "-pubin"], \
-                                       input = pem, capture_output = True, \
-                                       text = True, check = False)
+                    p = subprocess.run(["openssl", "ec", "-text", "-noout", "-pubin"],
+                                       input=pem, capture_output=True,
+                                       text=True, check=False)
                 elif isinstance(self._obj, EllipticCurvePrivateKey):
-                    p = subprocess.run(["openssl", "ec", "-text", "-noout"], \
-                                       input = pem, capture_output = True, \
-                                       text = True, check = False)
+                    p = subprocess.run(["openssl", "ec", "-text", "-noout"],
+                                       input=pem, capture_output=True,
+                                       text=True, check=False)
                 if p.returncode != 0:
                     return p.stdout + '\n' + p.stderr
                 else:

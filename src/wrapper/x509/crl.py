@@ -45,7 +45,9 @@ class CRL(BASE):
         Returns:
             The CRL object.
         """
-        b64 = "-----BEGIN X509 CRL-----\n" + b64 + "\n-----END X509 CRL-----"
+        b64 = "-----BEGIN X509 CRL-----" + '\n' + \
+              b64 + '\n' + \
+              "-----END X509 CRL-----"
         obj = cls()
         obj.load_from_base64(b64, x509.load_pem_x509_crl)
         return obj
@@ -93,7 +95,7 @@ class CRL(BASE):
         if isinstance(serial, str):
             serial = int(serial, base=16)
         entry = self._obj.get_revoked_certificate_by_serial_number(serial)
-        if entry is not None :
+        if entry is not None:
             entry = CRL_ENTRY(entry)
         return entry
 
@@ -109,27 +111,27 @@ class CRL(BASE):
             The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
             The bytes representation of the object if fmt = 'DER'.
         """
-        if fmt not in('PEM', 'DER', 'TEXT', 'BASE64'):
+        if fmt not in ('PEM', 'DER', 'TEXT', 'BASE64'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'TEXT' or 'BASE64'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"
             else:
-                pem = self.dump(fmt = 'PEM')
-                p = subprocess.run(["openssl", "crl", "-text", "-noout"], \
-                                   input = pem, capture_output = True, \
-                                   text = True, check = False)
+                pem = self.dump(fmt='PEM')
+                p = subprocess.run(["openssl", "crl", "-text", "-noout"],
+                                   input=pem, capture_output=True,
+                                   text=True, check=False)
                 if p.returncode != 0:
                     return p.stdout + '\n' + p.stderr
                 else:
                     return p.stdout
         else:
-            return super().dump(fmt = fmt)
+            return super().dump(fmt=fmt)
+
 
 #
 # AUXILIARY CLASS
 #
-
 class CRL_ENTRY():
 
     def __init__(self, obj):
@@ -158,7 +160,8 @@ class CRL_ENTRY():
 
     def dump(self):
         """ Returns a string representation. """
-        result = "serial = " + hex(self._obj.serial_number)[2:].upper() + '\n' + "revocation date = " + str(self._obj.revocation_date) + '\n'
+        result = "serial = " + hex(self._obj.serial_number)[2:].upper() + '\n' + \
+            "revocation date = " + str(self._obj.revocation_date) + '\n'
         try:
             result += "reason = " + self._obj.extensions.get_extension_for_oid(CRLEntryExtensionOID.CRL_REASON).value.reason._value_ + '\n'
         except x509.extensions.ExtensionNotFound:

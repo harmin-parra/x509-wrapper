@@ -28,7 +28,7 @@ class Certificate(BASE):
 
     @classmethod
     def load_der_file(cls, filepath):
-        """ Loads a certificate from a DER format file. 
+        """ Loads a certificate from a DER format file.
         Args:
             filepath (str): File path of the file to load.
         Returns:
@@ -46,7 +46,9 @@ class Certificate(BASE):
         Returns:
             The Certificate object.
         """
-        b64 = "-----BEGIN CERTIFICATE-----\n" + b64 + "\n-----END CERTIFICATE-----"
+        b64 = "-----BEGIN CERTIFICATE-----" + '\n' + \
+              b64 + '\n' + \
+              "-----END CERTIFICATE-----"
         obj = cls()
         obj.load_from_base64(b64, x509.load_pem_x509_certificate)
         return obj
@@ -91,7 +93,7 @@ class Certificate(BASE):
         Returns:
             The serial number in the specified format.
         """
-        if fmt not in('HEX', 'INT'):
+        if fmt not in ('HEX', 'INT'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'HEX' or 'INT'")
         if fmt == 'INT':
             return self._obj.serial_number
@@ -181,7 +183,7 @@ class Certificate(BASE):
                 result['decipher_only'] = False
             else:
                 result['encipher_only'] = ext.encipher_only
-                result['decipher_only'] = ext.decipher_only                
+                result['decipher_only'] = ext.decipher_only
         except x509.extensions.ExtensionNotFound:
             return None
         return result
@@ -212,7 +214,7 @@ class Certificate(BASE):
                     for q in p._policy_qualifiers:
                         if (type(q) == str):
                             value.append(('csp', q))
-                        else: # type(q) == UserNotice:
+                        else:  # type(q) == UserNotice:
                             org = None
                             numbers = None
                             if hasattr(q.notice_reference, 'organization'):
@@ -240,19 +242,19 @@ class Certificate(BASE):
             The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
             The bytes representation of the object if fmt = 'DER'.
         """
-        if fmt not in('PEM', 'DER', 'TEXT', 'BASE64'):
+        if fmt not in ('PEM', 'DER', 'TEXT', 'BASE64'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'TEXT' or 'BASE64'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"
             else:
-                pem = self.dump(fmt = 'PEM')
-                p = subprocess.run(["openssl", "x509", "-text", "-noout"], \
-                                   input = pem, capture_output = True, \
-                                   text = True, check = False)
+                pem = self.dump(fmt='PEM')
+                p = subprocess.run(["openssl", "x509", "-text", "-noout"],
+                                   input=pem, capture_output=True,
+                                   text=True, check=False)
                 if p.returncode != 0:
                     return p.stdout + '\n' + p.stderr
                 else:
                     return p.stdout
         else:
-            return super().dump(fmt = fmt)
+            return super().dump(fmt=fmt)

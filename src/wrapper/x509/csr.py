@@ -27,7 +27,7 @@ class CSR(BASE):
     #
     @classmethod
     def load_pem_file(cls, filepath):
-        """ Loads a CSR from a PEM format file. 
+        """ Loads a CSR from a PEM format file.
         Args:
             filepath (str): File path of the file to load.
         Returns:
@@ -39,7 +39,7 @@ class CSR(BASE):
 
     @classmethod
     def load_der_file(cls, filepath):
-        """ Loads a CSR from a DER format file. 
+        """ Loads a CSR from a DER format file.
         Args:
             filepath (str): File path of the file to load.
         Returns:
@@ -57,15 +57,17 @@ class CSR(BASE):
         Returns:
             The CSR object.
         """
-        b64 = "-----BEGIN CERTIFICATE REQUEST-----\n" + b64 + "\n-----END CERTIFICATE REQUEST-----"
+        b64 = "-----BEGIN CERTIFICATE REQUEST-----" + '\n' + \
+              b64 + '\n' + \
+              "-----END CERTIFICATE REQUEST-----"
         obj = cls()
         obj.load_from_base64(b64, x509.load_pem_x509_csr)
         return obj
 
     @staticmethod
-    def generate(file_csr='file.csr', file_key='file.key', file_format='PEM', \
-                 key_type='RSA', key_size=3072, key_curve=ec.SECP256R1, \
-                 CN=None, OU=None, O=None, C=None, Names=None, \
+    def generate(file_csr='file.csr', file_key='file.key', file_format='PEM',
+                 key_type='RSA', key_size=3072, key_curve=ec.SECP256R1,
+                 CN=None, OU=None, O=None, C=None, Names=None,
                  DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None):
         """ Generate a CSR and private key.
         Args:
@@ -94,9 +96,9 @@ class CSR(BASE):
             UPN (list[str], optional): The list of UPN emails to include in the SAN extension
             RegID (list[str], optional): The list of Registration IDs to include in the SAN extension
         """
-        if file_format not in('DER', 'PEM'):
+        if file_format not in ('DER', 'PEM'):
             raise ValueError(f"invalid parameter value: '{file_format}'. Expected value: 'PEM' or 'DER'")
-        if key_type not in('RSA', 'ECDSA'):
+        if key_type not in ('RSA', 'ECDSA'):
             raise ValueError(f"invalid parameter value: '{key_type}'. Expected value: 'RSA' or 'ECDSA'")
         if key_type == "RSA" and key_size % 1024 != 0:
             raise ValueError(f"invalid parameter value: '{key_size}'. Expected value: a multiple of 1024")
@@ -113,7 +115,7 @@ class CSR(BASE):
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption(),
             ))
-    
+
         csr = x509.CertificateSigningRequestBuilder()
 
         san = []
@@ -136,7 +138,7 @@ class CSR(BASE):
             for i in UPN:
                 san.append(x509.OtherName(ObjectIdentifier('1.3.6.1.4.1.311.20.2.3'), encode_to_der(i)))
         csr = csr.add_extension(x509.SubjectAlternativeName(san), critical=False)
-    
+
         name = []
         if CN is not None:
             name.append(x509.NameAttribute(NameOID.COMMON_NAME, CN))
@@ -173,19 +175,19 @@ class CSR(BASE):
             The string representation of the object if fmt = 'PEM', 'TEXT' or 'BASE64'.
             The bytes representation of the object if fmt = 'DER'.
         """
-        if fmt not in('PEM', 'DER', 'TEXT', 'BASE64'):
+        if fmt not in ('PEM', 'DER', 'TEXT', 'BASE64'):
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'PEM', 'DER', 'TEXT' or 'BASE64'")
         if fmt == "TEXT":
             if platform.system() == "Windows":
                 return "Dump in TEXT format not supported on Windows"
             else:
-                pem = self.dump(fmt = 'PEM')
-                p = subprocess.run(["openssl", "req", "-text", "-noout"], \
-                                   input = pem, capture_output = True, \
-                                   text = True, check = False)
+                pem = self.dump(fmt='PEM')
+                p = subprocess.run(["openssl", "req", "-text", "-noout"],
+                                   input=pem, capture_output=True,
+                                   text=True, check=False)
                 if p.returncode != 0:
                     return p.stdout + '\n' + p.stderr
                 else:
                     return p.stdout
         else:
-            return super().dump(fmt = fmt)
+            return super().dump(fmt=fmt)

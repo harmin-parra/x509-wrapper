@@ -21,7 +21,7 @@ class P12():
             passphrase (str, optional): The PKCS12 file passphrase.
         Returns:
             The P12 object.
-        """        
+        """
         p12 = cls()
         if passphrase is not None:
             passphrase = passphrase.encode()
@@ -46,7 +46,7 @@ class P12():
             passphrase (str, optional): The PKCS12 file passphrase.
         Returns:
             The P12 object.
-        """        
+        """
         p12 = cls()
         if passphrase is not None:
             passphrase = passphrase.encode()
@@ -102,9 +102,9 @@ class P12():
             raise ValueError(f"invalid parameter value: '{fmt}'. Expected value: 'DER', 'TEXT' or 'BASE64'")
         if fmt == "TEXT":
             return self.get_cert().dump('TEXT') + '\n' + self.get_key().dump('TEXT')
-        elif fmt == "BASE64":  # fmt == "BASE64"
+        elif fmt == "BASE64":   # fmt == "BASE64"
             return base64.b64encode(pkcs12.serialize_key_and_certificates(None, self._obj.key, self._obj.cert.certificate, None, serialization.NoEncryption())).decode()
-        else: # fmt == 'DER'
-            pem = self.dump(fmt = 'BASE64')
+        else:  # fmt == 'DER'
+            pem = self.dump(fmt='BASE64')
             return base64.b64decode(pem.encode())
             
