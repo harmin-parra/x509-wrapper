@@ -1,16 +1,17 @@
 from wrapper.x509 import Certificate
 import cryptography.x509
+import os
 import pytest
 
 #
 # Test loaders
 #
 def test_load_rsa_der_file():
-    cert = Certificate.load_der_file("test/resources/rsa.crt")
+    cert = Certificate.load_der_file(f"test{os.sep}resources{os.sep}rsa.crt")
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
 def test_load_rsa_pem_file():
-    cert = Certificate.load_pem_file("test/resources/rsa.pem")
+    cert = Certificate.load_pem_file(f"test{os.sep}resources{os.sep}rsa.pem")
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
 def test_load_rsa_base64_string():
@@ -19,11 +20,11 @@ def test_load_rsa_base64_string():
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
 def test_load_ecdsa_der_file():
-    cert = Certificate.load_der_file("test/resources/ecdsa.crt")
+    cert = Certificate.load_der_file(f"test{os.sep}resources{os.sep}ecdsa.crt")
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
 def test_load_ecdsa_pem_file():
-    cert = Certificate.load_pem_file("test/resources/ecdsa.pem")
+    cert = Certificate.load_pem_file(f"test{os.sep}resources{os.sep}ecdsa.pem")
     assert isinstance(cert._obj, cryptography.x509.Certificate)
 
 def test_load_ecdsa_base64_string():
@@ -41,14 +42,14 @@ _ecdsa = None
 def cert_rsa():
     global _rsa
     if _rsa is None:
-        _rsa = Certificate.load_pem_file("test/resources/rsa.pem")
+        _rsa = Certificate.load_pem_file(f"test{os.sep}resources{os.sep}rsa.pem")
     return _rsa
 
 @pytest.fixture
 def cert_ecdsa():
     global _ecdsa
     if _ecdsa is None:
-        _ecdsa = Certificate.load_pem_file("test/resources/ecdsa.pem")
+        _ecdsa = Certificate.load_pem_file(f"test{os.sep}resources{os.sep}ecdsa.pem")
     return _ecdsa
 
 #
@@ -198,12 +199,12 @@ def test_san_upn_unicode():
 # Test persistance
 #
 def test_save_rsa(cert_rsa):
-    cert_rsa.save("test/tmp/rsa.pem", "PEM")
-    cert_rsa.save("test/tmp/rsa.crt", "DER")
+    cert_rsa.save(f"test{os.sep}tmp{os.sep}rsa.pem", "PEM")
+    cert_rsa.save(f"test{os.sep}tmp{os.sep}rsa.crt", "DER")
 
 def test_save_ecdsa(cert_ecdsa):
-    cert_ecdsa.save("test/tmp/ecdsa.pem", "PEM")
-    cert_ecdsa.save("test/tmp/ecdsa.crt", "DER")
+    cert_ecdsa.save(f"test{os.sep}tmp{os.sep}ecdsa.pem", "PEM")
+    cert_ecdsa.save(f"test{os.sep}tmp{os.sep}ecdsa.crt", "DER")
 
 #
 # Test dumpers

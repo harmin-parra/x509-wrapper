@@ -1,5 +1,6 @@
 from wrapper.x509 import P12
 from cryptography.hazmat.primitives.serialization.pkcs12 import PKCS12KeyAndCertificates
+import os
 import pytest
 
 
@@ -7,11 +8,11 @@ import pytest
 # Test loaders
 #
 def test_load_rsa_file():
-    p12 = P12.load_from_file("test/resources/rsa.p12", "1234")
+    p12 = P12.load_from_file(f"test{os.sep}resources{os.sep}rsa.p12", "1234")
     assert isinstance(p12._obj, PKCS12KeyAndCertificates)
 
 def test_load_ecdsa_file():
-    p12 = P12.load_from_file("test/resources/ecdsa.p12", "1234")
+    p12 = P12.load_from_file(f"test{os.sep}resources{os.sep}ecdsa.p12", "1234")
     assert isinstance(p12._obj, PKCS12KeyAndCertificates)
 
 def test_load_rsa_base64():
@@ -31,21 +32,21 @@ _ecdsa = None
 def p12_rsa():
     global _rsa
     if _rsa is None:
-        _rsa = P12.load_from_file("test/resources/rsa.p12", "1234")
+        _rsa = P12.load_from_file(f"test{os.sep}resources{os.sep}rsa.p12", "1234")
     return _rsa
 
 @pytest.fixture
 def p12_ecdsa():
     global _ecdsa
     if _ecdsa is None:
-        _ecdsa = P12.load_from_file("test/resources/ecdsa.p12", "1234")
+        _ecdsa = P12.load_from_file(f"test{os.sep}resources{os.sep}ecdsa.p12", "1234")
     return _ecdsa
 
 def test_save_rsa(p12_rsa):
-    P12.save(p12_rsa.get_cert(), p12_rsa.get_key(), "test/tmp/rsa.p12", "test")
+    P12.save(p12_rsa.get_cert(), p12_rsa.get_key(), f"test{os.sep}tmp{os.sep}rsa.p12", "test")
 
 def test_save_ecdsa(p12_ecdsa):
-    P12.save(p12_ecdsa.get_cert(), p12_ecdsa.get_key(), "test/tmp/ecdsa.p12", "test")
+    P12.save(p12_ecdsa.get_cert(), p12_ecdsa.get_key(), f"test{os.sep}tmp{os.sep}ecdsa.p12", "test")
 
 def test_dump_rsa(p12_rsa):
     print(p12_rsa.dump("BASE64"))

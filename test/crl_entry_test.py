@@ -1,5 +1,6 @@
 from wrapper.x509 import CRL
 from cryptography import x509
+import os
 import pytest
 
 #
@@ -11,7 +12,7 @@ _crl = None
 def crl():
     global _crl
     if _crl is None:
-        _crl = CRL.load_pem_file("test/resources/pem.crl")
+        _crl = CRL.load_pem_file(f"test{os.sep}resources{os.sep}pem.crl")
     return _crl
 
 #

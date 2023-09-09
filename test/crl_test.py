@@ -1,17 +1,18 @@
 from wrapper.x509 import CRL
 import cryptography.x509
 import datetime
+import os
 import pytest
 
 #
 # Test loaders
 #
 def test_load_pem_file():
-    crl = CRL.load_pem_file("test/resources/pem.crl")
+    crl = CRL.load_pem_file(f"test{os.sep}resources{os.sep}pem.crl")
     assert isinstance(crl._obj, cryptography.x509.CertificateRevocationList)
 
 def test_load_der_file():
-    crl = CRL.load_der_file("test/resources/der.crl")
+    crl = CRL.load_der_file(f"test{os.sep}resources{os.sep}der.crl")
     assert isinstance(crl._obj, cryptography.x509.CertificateRevocationList)
 
 def test_load_base64():
@@ -29,14 +30,14 @@ _csr2 = None
 def crl1():
     global _csr1
     if _csr1 is None:
-        _csr1 = CRL.load_pem_file("test/resources/pem.crl")
+        _csr1 = CRL.load_pem_file(f"test{os.sep}resources{os.sep}pem.crl")
     return _csr1
 
 @pytest.fixture
 def crl2():
     global _csr2
     if _csr2 is None:
-        _csr2 = CRL.load_der_file("test/resources/sha-1.crl")
+        _csr2 = CRL.load_der_file(f"test{os.sep}resources{os.sep}sha-1.crl")
     return _csr2
 
 #
@@ -100,8 +101,8 @@ def test_not_revoked(crl1):
 # Test persistance
 #
 def test_save(crl1):
-    crl1.save("test/tmp/pem.crl", "PEM")
-    crl1.save("test/tmp/der.crl", "DER")
+    crl1.save(f"test{os.sep}tmp{os.sep}pem.crl", "PEM")
+    crl1.save(f"test{os.sep}tmp{os.sep}der.crl", "DER")
 
 #
 # Dumpers

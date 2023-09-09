@@ -1,6 +1,7 @@
 from cryptography.hazmat.primitives.asymmetric import ec
 from wrapper.x509 import CSR, RDN
 import cryptography.x509
+import os
 import pytest
 
 
@@ -8,11 +9,11 @@ import pytest
 # Test loaders
 #
 def test_load_rsa_der_file():
-    csr = CSR.load_der_file("test/resources/rsa.der.csr")
+    csr = CSR.load_der_file(f"test{os.sep}resources{os.sep}rsa.der.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 def test_load_rsa_pem_file():
-    csr = CSR.load_pem_file("test/resources/rsa.pem.csr")
+    csr = CSR.load_pem_file(f"test{os.sep}resources{os.sep}rsa.pem.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 def test_load_rsa_base64_string():
@@ -21,11 +22,11 @@ def test_load_rsa_base64_string():
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 def test_load_ecdsa_der_file():
-    csr = CSR.load_der_file("test/resources/ecdsa.der.csr")
+    csr = CSR.load_der_file(f"test{os.sep}resources{os.sep}ecdsa.der.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 def test_load_ecdsa_pem_file():
-    csr = CSR.load_pem_file("test/resources/ecdsa.pem.csr")
+    csr = CSR.load_pem_file(f"test{os.sep}resources{os.sep}ecdsa.pem.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 def test_load_ecdsa_base64_string():
@@ -43,14 +44,14 @@ _ecdsa = None
 def csr_rsa():
     global _rsa
     if _rsa is None:
-        _rsa = CSR.load_pem_file("test/resources/rsa.pem.csr")
+        _rsa = CSR.load_pem_file(f"test{os.sep}resources{os.sep}rsa.pem.csr")
     return _rsa
 
 @pytest.fixture
 def csr_ecdsa():
     global _ecdsa
     if _ecdsa is None:
-        _ecdsa = CSR.load_pem_file("test/resources/ecdsa.pem.csr")
+        _ecdsa = CSR.load_pem_file(f"test{os.sep}resources{os.sep}ecdsa.pem.csr")
     return _ecdsa
 
 #
@@ -94,24 +95,24 @@ def test_ecdsa_key_curve(csr_ecdsa):
 #
 def test_generate_rsa_csr():
     CSR.generate(
-        file_csr="test/tmp/rsa.csr", file_key="test/tmp/rsa.key",
+        file_csr=f"test{os.sep}tmp{os.sep}rsa.csr", file_key=f"test{os.sep}tmp{os.sep}rsa.key",
         key_type='RSA', key_size=1024,
         CN='test', OU='test', O='test', C='FR',
         DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'],
         Email=['test@email.com'], IP=["127.0.0.1"]
     )
-    csr = CSR.load_pem_file("test/tmp/rsa.csr")
+    csr = CSR.load_pem_file(f"test{os.sep}tmp{os.sep}rsa.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 def test_generate_ecdsa_csr():
     CSR.generate(
-        file_csr="test/tmp/ecdsa.csr", file_key="test/tmp/ecdsa.key",
+        file_csr=f"test{os.sep}tmp{os.sep}ecdsa.csr", file_key=f"test{os.sep}tmp{os.sep}ecdsa.key",
         key_type='ECDSA', key_curve=ec.BrainpoolP512R1,
         CN='test', OU='test', O='test', C='FR',
         DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'],
         Email=['test@email.com'], IP=["127.0.0.1"]
     )
-    csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
+    csr = CSR.load_pem_file(f"test{os.sep}tmp{os.sep}ecdsa.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 def test_generate_rdn_csr():
@@ -124,23 +125,23 @@ def test_generate_rdn_csr():
         RDN.Initials: 'Initials',
     }
     CSR.generate(
-        file_csr="test/tmp/rdn.csr", file_key="test/tmp/rdn.key",
+        file_csr=f"test{os.sep}tmp{os.sep}rdn.csr", file_key=f"test{os.sep}tmp{os.sep}rdn.key",
         key_type='ECDSA', key_curve=ec.BrainpoolP512R1,
         Names=names,
     )
-    csr = CSR.load_pem_file("test/tmp/ecdsa.csr")
+    csr = CSR.load_pem_file(f"test{os.sep}tmp{os.sep}ecdsa.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
 
 #
 # Test persistance
 #
 def test_save_rsa(csr_rsa):
-    csr_rsa.save("test/tmp/rsa.pem.csr", "PEM")
-    csr_rsa.save("test/tmp/rsa.der.csr", "DER")
+    csr_rsa.save(f"test{os.sep}tmp{os.sep}rsa.pem.csr", "PEM")
+    csr_rsa.save(f"test{os.sep}tmp{os.sep}rsa.der.csr", "DER")
 
 def test_save_ecdsa(csr_ecdsa):
-    csr_ecdsa.save("test/tmp/ecdsa.pem.csr", "PEM")
-    csr_ecdsa.save("test/tmp/ecdsa.der.csr", "DER")
+    csr_ecdsa.save(f"test{os.sep}tmp{os.sep}ecdsa.pem.csr", "PEM")
+    csr_ecdsa.save(f"test{os.sep}tmp{os.sep}ecdsa.der.csr", "DER")
 
 #
 # Test dumpers

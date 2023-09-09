@@ -1,17 +1,18 @@
 from wrapper.x509 import CRL
 import cryptography.x509
 import datetime
+import os
 import pytest
 
 #
 # Test loaders
 #
 def test_load_pem_file():
-    delta = CRL.load_pem_file("test/resources/pem.delta.crl")
+    delta = CRL.load_pem_file(f"test{os.sep}resources{os.sep}pem.delta.crl")
     assert isinstance(delta._obj, cryptography.x509.CertificateRevocationList)
 
 def test_load_der_file():
-    delta = CRL.load_der_file("test/resources/der.delta.crl")
+    delta = CRL.load_der_file(f"test{os.sep}resources{os.sep}der.delta.crl")
     assert isinstance(delta._obj, cryptography.x509.CertificateRevocationList)
 
 def test_load_base64():
@@ -28,7 +29,7 @@ _delta1 = None
 def delta1():
     global _delta1
     if _delta1 is None:
-        _delta1 = CRL.load_pem_file("test/resources/pem.delta.crl")
+        _delta1 = CRL.load_pem_file(f"test{os.sep}resources{os.sep}pem.delta.crl")
     return _delta1
 
 #

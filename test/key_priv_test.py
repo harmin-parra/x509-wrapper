@@ -1,6 +1,7 @@
 from wrapper.x509 import KEY
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
+import os
 import pytest
 
 
@@ -8,11 +9,11 @@ import pytest
 # Test loaders
 #
 def test_load_rsa_der_file():
-    key = KEY.load_private_key_der_file("test/resources/rsa.der.priv.key")
+    key = KEY.load_private_key_der_file(f"test{os.sep}resources{os.sep}rsa.der.priv.key")
     assert isinstance(key._obj, RSAPrivateKey)
 
 def test_load_rsa_pem_file():
-    key = KEY.load_private_key_pem_file("test/resources/rsa.pem.priv.key")
+    key = KEY.load_private_key_pem_file(f"test{os.sep}resources{os.sep}rsa.pem.priv.key")
     assert isinstance(key._obj, RSAPrivateKey)
 
 def test_load_rsa_base64_string():
@@ -21,11 +22,11 @@ def test_load_rsa_base64_string():
     assert isinstance(key._obj, RSAPrivateKey)
 
 def test_load_ecdsa_der_file():
-    key = KEY.load_private_key_der_file("test/resources/ecdsa.der.priv.key")
+    key = KEY.load_private_key_der_file(f"test{os.sep}resources{os.sep}ecdsa.der.priv.key")
     assert isinstance(key._obj, EllipticCurvePrivateKey)
 
 def test_load_ecdsa_pem_file():
-    key = KEY.load_private_key_pem_file("test/resources/ecdsa.pem.priv.key")
+    key = KEY.load_private_key_pem_file(f"test{os.sep}resources{os.sep}ecdsa.pem.priv.key")
     assert isinstance(key._obj, EllipticCurvePrivateKey)
 
 """
@@ -45,14 +46,14 @@ _ecdsa = None
 def key_rsa():
     global _rsa
     if _rsa is None:
-        _rsa = KEY.load_private_key_pem_file("test/resources/rsa.pem.priv.key")
+        _rsa = KEY.load_private_key_pem_file(f"test{os.sep}resources{os.sep}rsa.pem.priv.key")
     return _rsa
 
 @pytest.fixture
 def key_ecdsa():
     global _ecdsa
     if _ecdsa is None:
-        _ecdsa = KEY.load_private_key_pem_file("test/resources/ecdsa.pem.priv.key")
+        _ecdsa = KEY.load_private_key_pem_file(f"test{os.sep}resources{os.sep}ecdsa.pem.priv.key")
     return _ecdsa
 
 #
@@ -80,12 +81,12 @@ def test_ecdsa_key_curve(key_ecdsa):
 # Test persistance
 #
 def test_save_rsa(key_rsa):
-    key_rsa.save("test/tmp/rsa.pem.priv.key", "PEM")
-    key_rsa.save("test/tmp/rsa.der.priv.key", "DER")
+    key_rsa.save(f"test{os.sep}tmp{os.sep}rsa.pem.priv.key", "PEM")
+    key_rsa.save(f"test{os.sep}tmp{os.sep}rsa.der.priv.key", "DER")
     
 def test_save_ecdsa(key_ecdsa):
-    key_ecdsa.save("test/tmp/ecdsa.pem.priv.key", "PEM")
-    key_ecdsa.save("test/tmp/ecdsa.der.priv.key", "DER")
+    key_ecdsa.save(f"test{os.sep}tmp{os.sep}ecdsa.pem.priv.key", "PEM")
+    key_ecdsa.save(f"test{os.sep}tmp{os.sep}ecdsa.der.priv.key", "DER")
 
 #
 # Test dumpers
