@@ -147,13 +147,13 @@ def test_save_ecdsa(csr_ecdsa):
 # Test dumpers
 #
 def test_dump_rsa(csr_rsa):
-    print(csr_rsa.dump("DER"))
-    print(csr_rsa.dump("BASE64"))
-    print(csr_rsa.dump("PEM"))
-    print(csr_rsa.dump("TEXT"))
+    print(csr_rsa.dump("DER"), '\n')
+    print(csr_rsa.dump("BASE64"), '\n')
+    print(csr_rsa.dump("PEM"), '\n')
+    print(csr_rsa.dump("TEXT"), '\n')
 
 def test_dump_ecdsa(csr_ecdsa):
-    print(csr_ecdsa.dump("DER"))
-    print(csr_ecdsa.dump("BASE64"))
-    print(csr_ecdsa.dump("PEM"))
-    print(csr_ecdsa.dump("TEXT"))
+    print(csr_ecdsa.dump("DER"), '\n')
+    print(csr_ecdsa.dump("BASE64"), '\n')
+    print(csr_ecdsa.dump("PEM"), '\n')
+    print(csr_ecdsa.dump("TEXT"), '\n')

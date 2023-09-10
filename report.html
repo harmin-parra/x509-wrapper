@@ -1,0 +1,3001 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>report.html</title>
+    <style>body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #E6E6E6;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #E6E6E6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.log {
+  background-color: #e6e6e6;
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  height: 230px;
+  overflow-y: scroll;
+  padding: 5px;
+  white-space: pre-wrap;
+}
+.log:only-child {
+  height: inherit;
+}
+
+div.image {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin-left: 5px;
+  overflow: hidden;
+  width: 320px;
+}
+div.image img {
+  width: 320px;
+}
+
+div.video {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin-left: 5px;
+  overflow: hidden;
+  width: 320px;
+}
+div.video video {
+  overflow: hidden;
+  width: 320px;
+  height: 240px;
+}
+
+.collapsed {
+  display: none;
+}
+
+.expander::after {
+  content: " (show details)";
+  color: #BBB;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.collapser::after {
+  content: " (hide details)";
+  color: #BBB;
+  font-style: italic;
+  cursor: pointer;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+
+.sort-icon {
+  font-size: 0px;
+  float: left;
+  margin-right: 5px;
+  margin-top: 5px;
+  /*triangle*/
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+}
+.inactive .sort-icon {
+  /*finish triangle*/
+  border-top: 8px solid #E6E6E6;
+}
+.asc.active .sort-icon {
+  /*finish triangle*/
+  border-bottom: 8px solid #999;
+}
+.desc.active .sort-icon {
+  /*finish triangle*/
+  border-top: 8px solid #999;
+}
+</style></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) { // eslint-disable-line no-redeclare
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function findAll(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sortColumn(elem) {
+    toggleSortStates(elem);
+    const colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    let key;
+    if (elem.classList.contains('result')) {
+        key = keyResult;
+    } else if (elem.classList.contains('links')) {
+        key = keyLink;
+    } else {
+        key = keyAlpha;
+    }
+    sortTable(elem, key(colIndex));
+}
+
+function showAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(showExtras);
+}
+
+function hideAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(hideExtras);
+}
+
+function showExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.remove('collapsed');
+    expandcollapse.classList.remove('expander');
+    expandcollapse.classList.add('collapser');
+}
+
+function hideExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.add('collapsed');
+    expandcollapse.classList.remove('collapser');
+    expandcollapse.classList.add('expander');
+}
+
+function showFilters() {
+    let visibleString = getQueryParameter('visible') || 'all';
+    visibleString = visibleString.toLowerCase();
+    const checkedItems = visibleString.split(',');
+
+    const filterItems = document.getElementsByClassName('filter');
+    for (let i = 0; i < filterItems.length; i++) {
+        filterItems[i].hidden = false;
+
+        if (visibleString != 'all') {
+            filterItems[i].checked = checkedItems.includes(filterItems[i].getAttribute('data-test-result'));
+            filterTable(filterItems[i]);
+        }
+    }
+}
+
+function addCollapse() {
+    // Add links for show/hide all
+    const resulttable = find('table#results-table');
+    const showhideall = document.createElement('p');
+    showhideall.innerHTML = '<a href="javascript:showAllExtras()">Show all details</a> / ' +
+                            '<a href="javascript:hideAllExtras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    findAll('.col-result').forEach(function(elem) {
+        const collapsed = getQueryParameter('collapsed') || 'Passed';
+        const extras = elem.parentNode.nextElementSibling;
+        const expandcollapse = document.createElement('span');
+        if (extras.classList.contains('collapsed')) {
+            expandcollapse.classList.add('expander');
+        } else if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add('collapsed');
+            expandcollapse.classList.add('expander');
+        } else {
+            expandcollapse.classList.add('collapser');
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener('click', function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains('collapsed')) {
+                showExtras(event.currentTarget);
+            } else {
+                hideExtras(event.currentTarget);
+            }
+        });
+    });
+}
+
+function getQueryParameter(name) {
+    const match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () { // eslint-disable-line no-unused-vars
+    resetSortHeaders();
+
+    addCollapse();
+
+    showFilters();
+
+    sortColumn(find('.initial-sort'));
+
+    findAll('.sortable').forEach(function(elem) {
+        elem.addEventListener('click',
+            function() {
+                sortColumn(elem);
+            }, false);
+    });
+}
+
+function sortTable(clicked, keyFunc) {
+    const rows = findAll('.results-table-row');
+    const reversed = !clicked.classList.contains('asc');
+    const sortedRows = sort(rows, keyFunc, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    const thead = document.getElementById('results-table-head');
+    document.getElementById('results-table').remove();
+    const parent = document.createElement('table');
+    parent.id = 'results-table';
+    parent.appendChild(thead);
+    sortedRows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName('BODY')[0].appendChild(parent);
+}
+
+function sort(items, keyFunc, reversed) {
+    const sortArray = items.map(function(item, i) {
+        return [keyFunc(item), i];
+    });
+
+    sortArray.sort(function(a, b) {
+        const keyA = a[0];
+        const keyB = b[0];
+
+        if (keyA == keyB) return 0;
+
+        if (reversed) {
+            return keyA < keyB ? 1 : -1;
+        } else {
+            return keyA > keyB ? 1 : -1;
+        }
+    });
+
+    return sortArray.map(function(item) {
+        const index = item[1];
+        return items[index];
+    });
+}
+
+function keyAlpha(colIndex) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[colIndex].firstChild.data.toLowerCase();
+    };
+}
+
+function keyLink(colIndex) {
+    return function(elem) {
+        const dataCell = elem.childNodes[1].childNodes[colIndex].firstChild;
+        return dataCell == null ? '' : dataCell.innerText.toLowerCase();
+    };
+}
+
+function keyResult(colIndex) {
+    return function(elem) {
+        const strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+            'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[colIndex].firstChild.data);
+    };
+}
+
+function resetSortHeaders() {
+    findAll('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    findAll('.sortable').forEach(function(elem) {
+        const icon = document.createElement('div');
+        icon.className = 'sort-icon';
+        icon.textContent = 'vvv';
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove('desc', 'active');
+        elem.classList.add('asc', 'inactive');
+    });
+}
+
+function toggleSortStates(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        resetSortHeaders();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function isAllRowsHidden(value) {
+    return value.hidden == false;
+}
+
+function filterTable(elem) { // eslint-disable-line no-unused-vars
+    const outcomeAtt = 'data-test-result';
+    const outcome = elem.getAttribute(outcomeAtt);
+    const classOutcome = outcome + ' results-table-row';
+    const outcomeRows = document.getElementsByClassName(classOutcome);
+
+    for(let i = 0; i < outcomeRows.length; i++){
+        outcomeRows[i].hidden = !elem.checked;
+    }
+
+    const rows = findAll('.results-table-row').filter(isAllRowsHidden);
+    const allRowsHidden = rows.length == 0 ? true : false;
+    const notFoundMessage = document.getElementById('not-found-message');
+    notFoundMessage.hidden = !allRowsHidden;
+}
+</script>
+    <h1>report.html</h1>
+    <p>Report generated on 10-Sep-2023 at 09:46:57 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v3.2.0</p>
+    <h2>Summary</h2>
+    <p>139 tests ran in 2.61 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="passed">139 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="failed">0 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable" col="duration">Duration</th>
+          <th class="sortable links" col="links">Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_load_rsa_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_load_rsa_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_load_rsa_base64_string</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_load_ecdsa_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_load_ecdsa_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_load_ecdsa_base64_string</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_subject_dn</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_issuer_dn</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_serial_number</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_aki</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_ski</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_san</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_san_empty</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_ian</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_ian_empty</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_rsa_key_type</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_rsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_rsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_ecdsa_key_type</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_ecdsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_ecdsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_CRL_dp</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_CRL_dp_empty</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_delta_dp</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_delta_dp_empty</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_authority_info_access</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_authority_info_access_empty</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_sid</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_sid_empty</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_key_usage</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_extended_key_usage</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_has_expired_true</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_OCSP_nocheck_true</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_OCSP_nocheck_false</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_policies</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_subjectDn_unicode</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_san_email_unicode1</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_san_email_unicode2</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_san_upn_unicode</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_save_rsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_save_ecdsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_dump_rsa</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x08\x020\x82\x06j\xa0\x03\x02\x01\x02\x02\x14&lt;B\xd1\xf8I&quot;\xa2%\xf34\xc3\xce\xa4\x96\xcc=j\x99\x08\x0c0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x000\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA0\x1e\x17\r230515181039Z\x17\r330428142039Z0=1\x0b0\t\x06\x03U\x04\x06\x13\x02FR1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\r0\x0b\x06\x03U\x04\x0b\x0c\x04Unit1\r0\x0b\x06\x03U\x04\x03\x0c\x04user0\x82\x01\xa20\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01\x05\x00\x03\x82\x01\x8f\x000\x82\x01\x8a\x02\x82\x01\x81\x00\xcb\xca\xad\xb63\xee\x7f\x92\xe1\xd2\t\xc7\xfc&lt;*\xda\x1f\xbd\x06z\xc0\xb0c.g\xcd\x96\xfdY\&#x27;][t\xbc#\xc7P\xb8\xdb\xb1\xbb\xd2&amp;*L\xda\xf2\xa2a\xfa\xe2\xb1\x9b\xe7\x9eP\xe8D\x1e\x97\x83\x01\x1c\xeaj\x8a\x1b\xe1\xe2\xf5\\\x9bD;\xa76iITk*(\xcc\xeeOL\x8d\xd0\x1b\xb5t\x1a\x82D\x99\xca\xd9DCe\&#x27;\x9e\xd7\xa6\xf5%x\x04\x9d&amp;\xd9{5\xfa&lt;\x9e\xf3\x89\xe5\xbd\xbcVB\x0c3ZK}N\x181C\xed\x99\x9c\x8f:\x94\xe8\x80`\xab\xa8Bb\x7f\x1c+z\xb9_\xea\x89\x1b\xea3\x05\xbd\xc3\x84\x14WW\x08\xf8\xfb\xc0b\x86\x05[g\x86u\xc2U\x8c\xaf\x96\xf4\xaa\x92\xf3\x9f\xc2\x8f\x9d\x8dp\xf4\x90\x1c\xa2\x1f\x15\xae\x7fQ\x8f\x03&gt;\xfaz\xc2.\xdb\x0c[\xe1\xae:\xea%c\x9d\xb0\xee\xcc\xd9vib\xaf\x9e\xf2r~W\x10\xe7\xa96\xaa\xd1\xa4*Hf\xeb\xaf\n\xffVg\xcf_\x9c\xc1\xca3\x10\xb4\x88\xc5L\xf1\xd3){\x8b\x9a\x92\xdc\x18\x8eHb\x80\x9b\xa8&gt;\x15c\x04\xe4\xa2&gt;\x84x\x7f6\xedtW\xdd\x9b\x14\xb8&amp;\x1f\xee\x89\x11\xc2#\xf4\x0b\xc5\xa8M){H\xdc\xf9\xf1\x86/\xfd\xc9\xcc\xee\x1bBJ\x92\x86 )V\xde\xf9\x06*E\xa5\x83R\xc9\xff+\xc55D\xb9c\xf1m\xf3\xe6\x94\x81 F9j`\x02\xcc\xb1\x86\x03&quot;\x97\xe3\xfe\xd4\x07NK:\xcf\xd2)\nJl\x1b~\x05\xc9\xeb#\xf7Bs\xf7\xacx\x18ks\x8fa\x02\x03\x01\x00\x01\xa3\x82\x04\x0e0\x82\x04\n0\x1d\x06\x03U\x1d\x0e\x04\x16\x04\x14\xa45\x98mtQ8WZ~MP\xde\x8fL$\xed\xaa\xa8\xe60\x1f\x06\x03U\x1d#\x04\x180\x16\x80\x14\xc6\xfd\xf8\xc3\x0c\xf7$&quot;Lg\xf5D\x9f;Y\x9a7S\xefV0\x0b\x06\x03U\x1d\x0f\x04\x04\x03\x02\x07\x800\x16\x06\x03U\x1d%\x01\x01\xff\x04\x0c0\n\x06\x08+\x06\x01\x05\x05\x07\x03\x030{\x06\x03U\x1d\x1f\x04t0r0\x1a\xa0\x18\xa0\x16\x86\x14http://localhost/crl0/\xa0-\xa0+\xa4)0\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA0#\xa0!\xa1\x1f0\r\x06\x03U\x04\x03\x0c\x06CRL DP0\x0e\x06\x03U\x04\n\x0c\x07Company0\x7f\x06\x03U\x1d.\x04x0v0\x1c\xa0\x1a\xa0\x18\x86\x16http://localhost/delta0/\xa0-\xa0+\xa4)0\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA0%\xa0#\xa1!0\x0e\x06\x03U\x04\n\x0c\x07Company0\x0f\x06\x03U\x04\x03\x0c\x08Delta DP0\x81\xfd\x06\x03U\x1d\x11\x04\x81\xf50\x81\xf2\x82\x0fwww.example.com\x87\x04\x7f\x00\x00\x01\x86\x16http://www.example.com\x88\x03*\x03\x04\x81\x11email@example.com\xa0\x1f\x06\n+\x06\x01\x04\x01\x827\x14\x02\x03\xa0\x11\x0c\x0fupn@example.com\xa4&lt;0:1\x140\x12\x06\n\t\x92&amp;\x89\x93\xf2,d\x01\x19\x16\x04LDAP1\x100\x0e\x06\x03U\x04\n\x0c\x07Example1\x100\x0e\x06\x03U\x04\x03\x0c\x07machine\xa0\x1f\x06\t+\x06\x01\x04\x01\x827\x19\x01\xa0\x12\x04\x10\xacK)\x06\xaa\xd6]O\xa9\x9cL\xbc\xb0je\xd9\xa0)\x06\x08+\x06\x01\x05\x05\x07\x08\t\xa0\x1d\x0c\x1bsmtpUTF8Mailbox@example.com0\x1c\x06\x03U\x1d\x12\x04\x150\x13\x81\x11admin@example.com0\x81\xf3\x06\x03U\x1d \x04\x81\xeb0\x81\xe80\x0e\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x000S\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x010C0 \x06\x08+\x06\x01\x05\x05\x07\x02\x01\x16\x14http://localhost/csp0\x1f\x06\x08+\x06\x01\x05\x05\x07\x02\x020\x130\x0b\x0c\x04org10\x03\x02\x01\x01\x0c\x04txt10.\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x020\x1e0\x1c\x06\x08+\x06\x01\x05\x05\x07\x02\x020\x100\x08\x0c\x04org20\x00\x0c\x04txt20$\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x030\x140\x12\x06\x08+\x06\x01\x05\x05\x07\x02\x020\x06\x0c\x04txt30+\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x040\x1b0\x19\x06\x08+\x06\x01\x05\x05\x07\x02\x020\r0\x0b\x0c\x04org40\x03\x02\x01\x040\x12\x06\t+\x06\x01\x05\x05\x070\x01\x05\x01\x01\xff\x04\x02\x05\x000)\x06\t+\x06\x01\x04\x01\x827\x19\x02\x04\x1c0\x1a\xa0\x18\x06\n+\x06\x01\x04\x01\x827\x19\x02\x01\xa0\n\x04\x08S-1-5-470R\x06\x08+\x06\x01\x05\x05\x07\x01\x01\x04F0D0!\x06\x08+\x06\x01\x05\x05\x070\x01\x86\x15http://localhost/ocsp0\x1f\x06\x08+\x06\x01\x05\x05\x070\x02\x86\x13http://localhost/ca0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x00\x03\x82\x01\x81\x00\x81\x1e&gt;\x8b\xad\xde/\xf6\x06H\xe7\xe4\x18sYT\x96\xe7\xb3\xb5\x1d\x87\xcd\x96\x8b\x04`\x02\r\xca\xd6_s\x1b\x18\xc2U\x03^\xbd\xc6\x83\x16y?\xd9oY1\x99Tvm\xe0\xfd\xa4\xb3\xa1HP=\xe4,\xee\xe8-\xd3\x9bP`\xa6\xa5\x99\x11\xe0e\xe9\xa1\xc4\xbd\xf3t\x90(9\x8c\xb2J\xb9\xb0\xf0\xf0\xed\xfb\xf4}S%\xccUE\x97tj\xcd8F\x8e\xf4\x14\xb3\x04\xd3D\&#x27;\&#x27;\x0f\xe1\x82T\xd9\r\x88Y12e\xff\xac\xdf&amp;\x01hZ\xfa\\@\xb6C:\xcc\xc5\xc4\xff\x7f\x94\xfb\xd9lM\x964\x95\x03&lt;\x14\xc2\xf5\xa0\xbe\xf5\x86\xb3Xl\xe7\x02\xffW\x1b\xae\n\x9a\xac\x8a\xe2\x9bt\x9a\x98\xe5\xbd\x82\xb41\xbf1\xf6\xd6\x0b\xd8\xee\xc8A)$\xcf\x063U\x19\xe47\x1e@\xf4M\x83\xc6\xf9\xfc\x1e\xbd\x04&quot;0M\xb8\xaa\x19\xf8\xaf\xee\xe7\x87\x07\xef\\\x8ee\xf8{;\xcf\xb1\r\xf4%\xda\xf2\xb4z\xdd\xad\xd7\x1f\xe9\xaaD\xf9\xe2\xe7n\x05P\x0e.\t\xf0\xcd\x9c{\x9c\xe1\xac\xf8\r\xb9n\xe4\x94\xf7\x13\xee\x9f9\x12\xe7y\xa7\xa7\xe3b\xf9b}K\x1a\xaf\x94\x8d&lt;\&#x27;\x0f\x020\xf6\xe8\xcf\xa8k\x8a\xef\x0c-X\xc4jyU\xb2K\xe1~\xe6\xf7\x9d}g\xfesQS\xa7@\xe3\xbe\x8duH\xf6.\xc9\xb3L\xa0\xb0\x01\xcfl\xfd\xb0|&amp;\x87\xfdA\n\xdf\xf1N\xde\xc6\x80\x94\x94`\x8aF\xef\x87\xf2\x00qX:x\xf9\xb5\xe1\xae\xc7\xcc9\xb5\xad\xa4\x95Y&lt;fq\x965&#x27; 
+
+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 
+
+-----BEGIN CERTIFICATE-----
+MIIIAjCCBmqgAwIBAgIUPELR+EkioiXzNMPOpJbMPWqZCAwwDQYJKoZIhvcNAQEL
+BQAwJzEQMA4GA1UECgwHQ29tcGFueTETMBEGA1UEAwwKRXhhbXBsZSBDQTAeFw0y
+MzA1MTUxODEwMzlaFw0zMzA0MjgxNDIwMzlaMD0xCzAJBgNVBAYTAkZSMRAwDgYD
+VQQKDAdDb21wYW55MQ0wCwYDVQQLDARVbml0MQ0wCwYDVQQDDAR1c2VyMIIBojAN
+BgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAy8qttjPuf5Lh0gnH/Dwq2h+9BnrA
+sGMuZ82W/VknXVt0vCPHULjbsbvSJipM2vKiYfrisZvnnlDoRB6XgwEc6mqKG+Hi
+9VybRDunNmlJVGsqKMzuT0yN0Bu1dBqCRJnK2URDZSee16b1JXgEnSbZezX6PJ7z
+ieW9vFZCDDNaS31OGDFD7ZmcjzqU6IBgq6hCYn8cK3q5X+qJG+ozBb3DhBRXVwj4
++8BihgVbZ4Z1wlWMr5b0qpLzn8KPnY1w9JAcoh8Vrn9RjwM++nrCLtsMW+GuOuol
+Y52w7szZdmlir57ycn5XEOepNqrRpCpIZuuvCv9WZ89fnMHKMxC0iMVM8dMpe4ua
+ktwYjkhigJuoPhVjBOSiPoR4fzbtdFfdmxS4Jh/uiRHCI/QLxahNKXtI3Pnxhi/9
+yczuG0JKkoYgKVbe+QYqRaWDUsn/K8U1RLlj8W3z5pSBIEY5amACzLGGAyKX4/7U
+B05LOs/SKQpKbBt+BcnrI/dCc/eseBhrc49hAgMBAAGjggQOMIIECjAdBgNVHQ4E
+FgQUpDWYbXRROFdafk1Q3o9MJO2qqOYwHwYDVR0jBBgwFoAUxv34wwz3JCJMZ/VE
+nztZmjdT71YwCwYDVR0PBAQDAgeAMBYGA1UdJQEB/wQMMAoGCCsGAQUFBwMDMHsG
+A1UdHwR0MHIwGqAYoBaGFGh0dHA6Ly9sb2NhbGhvc3QvY3JsMC+gLaArpCkwJzEQ
+MA4GA1UECgwHQ29tcGFueTETMBEGA1UEAwwKRXhhbXBsZSBDQTAjoCGhHzANBgNV
+BAMMBkNSTCBEUDAOBgNVBAoMB0NvbXBhbnkwfwYDVR0uBHgwdjAcoBqgGIYWaHR0
+cDovL2xvY2FsaG9zdC9kZWx0YTAvoC2gK6QpMCcxEDAOBgNVBAoMB0NvbXBhbnkx
+EzARBgNVBAMMCkV4YW1wbGUgQ0EwJaAjoSEwDgYDVQQKDAdDb21wYW55MA8GA1UE
+AwwIRGVsdGEgRFAwgf0GA1UdEQSB9TCB8oIPd3d3LmV4YW1wbGUuY29thwR/AAAB
+hhZodHRwOi8vd3d3LmV4YW1wbGUuY29tiAMqAwSBEWVtYWlsQGV4YW1wbGUuY29t
+oB8GCisGAQQBgjcUAgOgEQwPdXBuQGV4YW1wbGUuY29tpDwwOjEUMBIGCgmSJomT
+8ixkARkWBExEQVAxEDAOBgNVBAoMB0V4YW1wbGUxEDAOBgNVBAMMB21hY2hpbmWg
+HwYJKwYBBAGCNxkBoBIEEKxLKQaq1l1PqZxMvLBqZdmgKQYIKwYBBQUHCAmgHQwb
+c210cFVURjhNYWlsYm94QGV4YW1wbGUuY29tMBwGA1UdEgQVMBOBEWFkbWluQGV4
+YW1wbGUuY29tMIHzBgNVHSAEgeswgegwDgYMKwYBBAGwLQUBAQEAMFMGDCsGAQQB
+sC0FAQEBATBDMCAGCCsGAQUFBwIBFhRodHRwOi8vbG9jYWxob3N0L2NzcDAfBggr
+BgEFBQcCAjATMAsMBG9yZzEwAwIBAQwEdHh0MTAuBgwrBgEEAbAtBQEBAQIwHjAc
+BggrBgEFBQcCAjAQMAgMBG9yZzIwAAwEdHh0MjAkBgwrBgEEAbAtBQEBAQMwFDAS
+BggrBgEFBQcCAjAGDAR0eHQzMCsGDCsGAQQBsC0FAQEBBDAbMBkGCCsGAQUFBwIC
+MA0wCwwEb3JnNDADAgEEMBIGCSsGAQUFBzABBQEB/wQCBQAwKQYJKwYBBAGCNxkC
+BBwwGqAYBgorBgEEAYI3GQIBoAoECFMtMS01LTQ3MFIGCCsGAQUFBwEBBEYwRDAh
+BggrBgEFBQcwAYYVaHR0cDovL2xvY2FsaG9zdC9vY3NwMB8GCCsGAQUFBzAChhNo
+dHRwOi8vbG9jYWxob3N0L2NhMA0GCSqGSIb3DQEBCwUAA4IBgQCBHj6Lrd4v9gZI
+5+QYc1lUlueztR2HzZaLBGACDcrWX3MbGMJVA169xoMWeT/Zb1kxmVR2beD9pLOh
+SFA95Czu6C3Tm1BgpqWZEeBl6aHEvfN0kCg5jLJKubDw8O379H1TJcxVRZd0as04
+Ro70FLME00QnJw/hglTZDYhZMTJl/6zfJgFoWvpcQLZDOszFxP9/lPvZbE2WNJUD
+PBTC9aC+9YazWGznAv9XG64KmqyK4pt0mpjlvYK0Mb8x9tYL2O7IQSkkzwYzVRnk
+Nx5A9E2Dxvn8Hr0EIjBNuKoZ+K/u54cH71yOZfh7O8+xDfQl2vK0et2t1x/pqkT5
+4uduBVAOLgnwzZx7nOGs+A25buSU9xPunzkS53mnp+Ni+WJ9SxqvlI08Jw8CMPbo
+z6hriu8MLVjEanlVskvhfub3nX1n/nNRU6dA476NdUj2LsmzTKCwAc9s/bB8Jof9
+QQrf8U7exoCUlGCKRu+H8gBxWDp4+bXhrsfMObWtpJVZPGZxljU=
+-----END CERTIFICATE-----
+ 
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            3c:42:d1:f8:49:22:a2:25:f3:34:c3:ce:a4:96:cc:3d:6a:99:08:0c
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: O = Company, CN = Example CA
+        Validity
+            Not Before: May 15 18:10:39 2023 GMT
+            Not After : Apr 28 14:20:39 2033 GMT
+        Subject: C = FR, O = Company, OU = Unit, CN = user
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (3072 bit)
+                Modulus:
+                    00:cb:ca:ad:b6:33:ee:7f:92:e1:d2:09:c7:fc:3c:
+                    2a:da:1f:bd:06:7a:c0:b0:63:2e:67:cd:96:fd:59:
+                    27:5d:5b:74:bc:23:c7:50:b8:db:b1:bb:d2:26:2a:
+                    4c:da:f2:a2:61:fa:e2:b1:9b:e7:9e:50:e8:44:1e:
+                    97:83:01:1c:ea:6a:8a:1b:e1:e2:f5:5c:9b:44:3b:
+                    a7:36:69:49:54:6b:2a:28:cc:ee:4f:4c:8d:d0:1b:
+                    b5:74:1a:82:44:99:ca:d9:44:43:65:27:9e:d7:a6:
+                    f5:25:78:04:9d:26:d9:7b:35:fa:3c:9e:f3:89:e5:
+                    bd:bc:56:42:0c:33:5a:4b:7d:4e:18:31:43:ed:99:
+                    9c:8f:3a:94:e8:80:60:ab:a8:42:62:7f:1c:2b:7a:
+                    b9:5f:ea:89:1b:ea:33:05:bd:c3:84:14:57:57:08:
+                    f8:fb:c0:62:86:05:5b:67:86:75:c2:55:8c:af:96:
+                    f4:aa:92:f3:9f:c2:8f:9d:8d:70:f4:90:1c:a2:1f:
+                    15:ae:7f:51:8f:03:3e:fa:7a:c2:2e:db:0c:5b:e1:
+                    ae:3a:ea:25:63:9d:b0:ee:cc:d9:76:69:62:af:9e:
+                    f2:72:7e:57:10:e7:a9:36:aa:d1:a4:2a:48:66:eb:
+                    af:0a:ff:56:67:cf:5f:9c:c1:ca:33:10:b4:88:c5:
+                    4c:f1:d3:29:7b:8b:9a:92:dc:18:8e:48:62:80:9b:
+                    a8:3e:15:63:04:e4:a2:3e:84:78:7f:36:ed:74:57:
+                    dd:9b:14:b8:26:1f:ee:89:11:c2:23:f4:0b:c5:a8:
+                    4d:29:7b:48:dc:f9:f1:86:2f:fd:c9:cc:ee:1b:42:
+                    4a:92:86:20:29:56:de:f9:06:2a:45:a5:83:52:c9:
+                    ff:2b:c5:35:44:b9:63:f1:6d:f3:e6:94:81:20:46:
+                    39:6a:60:02:cc:b1:86:03:22:97:e3:fe:d4:07:4e:
+                    4b:3a:cf:d2:29:0a:4a:6c:1b:7e:05:c9:eb:23:f7:
+                    42:73:f7:ac:78:18:6b:73:8f:61
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                A4:35:98:6D:74:51:38:57:5A:7E:4D:50:DE:8F:4C:24:ED:AA:A8:E6
+            X509v3 Authority Key Identifier: 
+                keyid:C6:FD:F8:C3:0C:F7:24:22:4C:67:F5:44:9F:3B:59:9A:37:53:EF:56
+
+            X509v3 Key Usage: 
+                Digital Signature
+            X509v3 Extended Key Usage: critical
+                Code Signing
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://localhost/crl
+
+                Full Name:
+                  DirName:O = Company, CN = Example CA
+
+                Relative Name:
+                  CN = CRL DP + O = Company
+
+            X509v3 Freshest CRL: 
+
+                Full Name:
+                  URI:http://localhost/delta
+
+                Full Name:
+                  DirName:O = Company, CN = Example CA
+
+                Relative Name:
+                  O = Company + CN = Delta DP
+
+            X509v3 Subject Alternative Name: 
+                DNS:www.example.com, IP Address:127.0.0.1, URI:http://www.example.com, Registered ID:1.2.3.4, email:email@example.com, othername:&lt;unsupported&gt;, DirName:/DC=LDAP/O=Example/CN=machine, othername:&lt;unsupported&gt;, othername:&lt;unsupported&gt;
+            X509v3 Issuer Alternative Name: 
+                email:admin@example.com
+            X509v3 Certificate Policies: 
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.0
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.1
+                  CPS: http://localhost/csp
+                  User Notice:
+                    Organization: org1
+                    Number: 1
+                    Explicit Text: txt1
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.2
+                  User Notice:
+                    Organization: org2
+                    Number: 
+                    Explicit Text: txt2
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.3
+                  User Notice:
+                    Explicit Text: txt3
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.4
+                  User Notice:
+                    Organization: org4
+                    Number: 4
+
+            OCSP No Check: critical
+
+            1.3.6.1.4.1.311.25.2: 
+                0....
++.....7....
+..S-1-5-47
+            Authority Information Access: 
+                OCSP - URI:http://localhost/ocsp
+                CA Issuers - URI:http://localhost/ca
+
+    Signature Algorithm: sha256WithRSAEncryption
+         81:1e:3e:8b:ad:de:2f:f6:06:48:e7:e4:18:73:59:54:96:e7:
+         b3:b5:1d:87:cd:96:8b:04:60:02:0d:ca:d6:5f:73:1b:18:c2:
+         55:03:5e:bd:c6:83:16:79:3f:d9:6f:59:31:99:54:76:6d:e0:
+         fd:a4:b3:a1:48:50:3d:e4:2c:ee:e8:2d:d3:9b:50:60:a6:a5:
+         99:11:e0:65:e9:a1:c4:bd:f3:74:90:28:39:8c:b2:4a:b9:b0:
+         f0:f0:ed:fb:f4:7d:53:25:cc:55:45:97:74:6a:cd:38:46:8e:
+         f4:14:b3:04:d3:44:27:27:0f:e1:82:54:d9:0d:88:59:31:32:
+         65:ff:ac:df:26:01:68:5a:fa:5c:40:b6:43:3a:cc:c5:c4:ff:
+         7f:94:fb:d9:6c:4d:96:34:95:03:3c:14:c2:f5:a0:be:f5:86:
+         b3:58:6c:e7:02:ff:57:1b:ae:0a:9a:ac:8a:e2:9b:74:9a:98:
+         e5:bd:82:b4:31:bf:31:f6:d6:0b:d8:ee:c8:41:29:24:cf:06:
+         33:55:19:e4:37:1e:40:f4:4d:83:c6:f9:fc:1e:bd:04:22:30:
+         4d:b8:aa:19:f8:af:ee:e7:87:07:ef:5c:8e:65:f8:7b:3b:cf:
+         b1:0d:f4:25:da:f2:b4:7a:dd:ad:d7:1f:e9:aa:44:f9:e2:e7:
+         6e:05:50:0e:2e:09:f0:cd:9c:7b:9c:e1:ac:f8:0d:b9:6e:e4:
+         94:f7:13:ee:9f:39:12:e7:79:a7:a7:e3:62:f9:62:7d:4b:1a:
+         af:94:8d:3c:27:0f:02:30:f6:e8:cf:a8:6b:8a:ef:0c:2d:58:
+         c4:6a:79:55:b2:4b:e1:7e:e6:f7:9d:7d:67:fe:73:51:53:a7:
+         40:e3:be:8d:75:48:f6:2e:c9:b3:4c:a0:b0:01:cf:6c:fd:b0:
+         7c:26:87:fd:41:0a:df:f1:4e:de:c6:80:94:94:60:8a:46:ef:
+         87:f2:00:71:58:3a:78:f9:b5:e1:ae:c7:cc:39:b5:ad:a4:95:
+         59:3c:66:71:96:35
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/cert_test.py::test_dump_ecdsa</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x03\x180\x82\x01\x80\xa0\x03\x02\x01\x02\x02\x14h\x80*_\xbcD\x13\x92Qw\x1c\x08\t\xcb\x98D\xc8\x15\xc8\xad0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x000\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA0\x1e\x17\r230502073352Z\x17\r230502074652Z0=1\x0b0\t\x06\x03U\x04\x06\x13\x02FR1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\r0\x0b\x06\x03U\x04\x0b\x0c\x04Unit1\r0\x0b\x06\x03U\x04\x03\x0c\x04user0Y0\x13\x06\x07*\x86H\xce=\x02\x01\x06\x08*\x86H\xce=\x03\x01\x07\x03B\x00\x04c&amp;&amp;3\xfd\xad\x88#KVBn\xe6\xd5\x82\xbd\xaa\xb8_x@K\xac&amp;\xc1\xef\xda\xfb\x83J\xb3\xf3W\x030Z\xf9b\xa2\x01\x88A\xc2&gt;\xd5e\xe8n\xe4\xe0\xb1]X2&gt;\xe1\x10+\xdb\x92A3\x9e\xe3\xa3q0o0\x1d\x06\x03U\x1d\x0e\x04\x16\x04\x14\xddsAX%K+\x89\xc3 \xde%\x99\x17\x8e\xe6\xfeh\xaep0\x1f\x06\x03U\x1d#\x04\x180\x16\x80\x14\xc6\xfd\xf8\xc3\x0c\xf7$&quot;Lg\xf5D\x9f;Y\x9a7S\xefV0\x0e\x06\x03U\x1d\x0f\x01\x01\xff\x04\x04\x03\x02\x0400\x1d\x06\x03U\x1d%\x04\x160\x14\x06\x08+\x06\x01\x05\x05\x07\x03\x01\x06\x08+\x06\x01\x05\x05\x07\x03\x020\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x00\x03\x82\x01\x81\x00\x00\xf8\x15\xcd`\x11\xdeR&gt;\x14.\x18\x0f\xa9\x97|\xd3\xff\x99\xb3\x97~S4]K7H\x82\xee\x12\xd4\x1d\xbb/&gt;?\x9aF\xf0\x91\xbdR@%\x10N\xf1]\xc1\xb0j\x02z\xe7\xf6\x02\xec=\xcd\x181\xc9\x8a\x06H\x8b\x9eY&gt;\rf\xc2a\xda\xec\x9d7\xc2\xaf\xca\x8d:@\xc8jDL\xff\xe76A\xb6F\x80 \xf8\x8b\x14d*\x1cl\x12\xea\xd4@\xba\xf5\x1dI\xe0\xaee\xca*r,N\x10\xbey\xf3A\xc8KBs\rn\xccO\x94\xdc\x8eAp\x0c\x0b\x17\xd2\x9c\xda\\\xe6\x13\xffh\xd5$\xc4kPr@\x1du\x8bB\x9f\xfe\x8c\xa33\xd2e\x97\xf2!\x96\x94r\xb0\xe2\x0c-,&gt;rMN\xca\x91k\x8a\xbeIIO\xf2y*U\xa0\xe8\xac\xd7\xec\xe2\x19E\x0e\xbcX\x0b\xa5xO\x12\xd6!\xfd3\xd9\xee^\xb3\t\x9b\x1c\xf3_\xb5\&#x27;\x95s\xbf*\xb2\x10^\xbd\xc31x\xe6\xc1\\\xd4//\x98\x98\xbb\x0fc&gt;\xbf\xe0\x81rc?\xb2Y\xd1F\xd4(@\xca\x0fCD\xa0D\r\xd5!\xa3Ka(\x98I\xe2\ruhe\x81\xa3U\xa2\xf6\xd25\x8b\xefu\xce\xc7\xb0\xd8\xc1\x85\x8d\xd4\xc2\xbdh\x9c\xec\xaa\xa8P\x05Y\x12\xa9\xa7 \xce:J\x14\xeer\xd2\x98\xff\x02\xfa\x9b\xe7}\xab\xbd}n\x06\x95\xd2u\xab\x81\r\xc4/\xb4@F\x1e\x19\xc3\xb7.\xa6k\xd1\xf7-\x00Gr\xf6d\x15c\xb0`\xa09xd\xb9v\x1f\x93ko\xe5r\x07lV\\w\x00/\x1b\x03\x0bF&#x27; 
+
+MIIDGDCCAYCgAwIBAgIUaIAqX7xEE5JRdxwICcuYRMgVyK0wDQYJKoZIhvcNAQELBQAwJzEQMA4GA1UECgwHQ29tcGFueTETMBEGA1UEAwwKRXhhbXBsZSBDQTAeFw0yMzA1MDIwNzMzNTJaFw0yMzA1MDIwNzQ2NTJaMD0xCzAJBgNVBAYTAkZSMRAwDgYDVQQKDAdDb21wYW55MQ0wCwYDVQQLDARVbml0MQ0wCwYDVQQDDAR1c2VyMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe46NxMG8wHQYDVR0OBBYEFN1zQVglSyuJwyDeJZkXjub+aK5wMB8GA1UdIwQYMBaAFMb9+MMM9yQiTGf1RJ87WZo3U+9WMA4GA1UdDwEB/wQEAwIEMDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggGBAAD4Fc1gEd5SPhQuGA+pl3zT/5mzl35TNF1LN0iC7hLUHbsvPj+aRvCRvVJAJRBO8V3BsGoCeuf2Auw9zRgxyYoGSIueWT4NZsJh2uydN8Kvyo06QMhqREz/5zZBtkaAIPiLFGQqHGwS6tRAuvUdSeCuZcoqcixOEL5580HIS0JzDW7MT5TcjkFwDAsX0pzaXOYT/2jVJMRrUHJAHXWLQp/+jKMz0mWX8iGWlHKw4gwtLD5yTU7KkWuKvklJT/J5KlWg6KzX7OIZRQ68WAuleE8S1iH9M9nuXrMJmxzzX7UnlXO/KrIQXr3DMXjmwVzULy+YmLsPYz6/4IFyYz+yWdFG1ChAyg9DRKBEDdUho0thKJhJ4g11aGWBo1Wi9tI1i+91zsew2MGFjdTCvWic7KqoUAVZEqmnIM46ShTuctKY/wL6m+d9q719bgaV0nWrgQ3EL7RARh4Zw7cupmvR9y0AR3L2ZBVjsGCgOXhkuXYfk2tv5XIHbFZcdwAvGwMLRg== 
+
+-----BEGIN CERTIFICATE-----
+MIIDGDCCAYCgAwIBAgIUaIAqX7xEE5JRdxwICcuYRMgVyK0wDQYJKoZIhvcNAQEL
+BQAwJzEQMA4GA1UECgwHQ29tcGFueTETMBEGA1UEAwwKRXhhbXBsZSBDQTAeFw0y
+MzA1MDIwNzMzNTJaFw0yMzA1MDIwNzQ2NTJaMD0xCzAJBgNVBAYTAkZSMRAwDgYD
+VQQKDAdDb21wYW55MQ0wCwYDVQQLDARVbml0MQ0wCwYDVQQDDAR1c2VyMFkwEwYH
+KoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a
++4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe46NxMG8wHQYDVR0O
+BBYEFN1zQVglSyuJwyDeJZkXjub+aK5wMB8GA1UdIwQYMBaAFMb9+MMM9yQiTGf1
+RJ87WZo3U+9WMA4GA1UdDwEB/wQEAwIEMDAdBgNVHSUEFjAUBggrBgEFBQcDAQYI
+KwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggGBAAD4Fc1gEd5SPhQuGA+pl3zT/5mz
+l35TNF1LN0iC7hLUHbsvPj+aRvCRvVJAJRBO8V3BsGoCeuf2Auw9zRgxyYoGSIue
+WT4NZsJh2uydN8Kvyo06QMhqREz/5zZBtkaAIPiLFGQqHGwS6tRAuvUdSeCuZcoq
+cixOEL5580HIS0JzDW7MT5TcjkFwDAsX0pzaXOYT/2jVJMRrUHJAHXWLQp/+jKMz
+0mWX8iGWlHKw4gwtLD5yTU7KkWuKvklJT/J5KlWg6KzX7OIZRQ68WAuleE8S1iH9
+M9nuXrMJmxzzX7UnlXO/KrIQXr3DMXjmwVzULy+YmLsPYz6/4IFyYz+yWdFG1ChA
+yg9DRKBEDdUho0thKJhJ4g11aGWBo1Wi9tI1i+91zsew2MGFjdTCvWic7KqoUAVZ
+EqmnIM46ShTuctKY/wL6m+d9q719bgaV0nWrgQ3EL7RARh4Zw7cupmvR9y0AR3L2
+ZBVjsGCgOXhkuXYfk2tv5XIHbFZcdwAvGwMLRg==
+-----END CERTIFICATE-----
+ 
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            68:80:2a:5f:bc:44:13:92:51:77:1c:08:09:cb:98:44:c8:15:c8:ad
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: O = Company, CN = Example CA
+        Validity
+            Not Before: May  2 07:33:52 2023 GMT
+            Not After : May  2 07:46:52 2023 GMT
+        Subject: C = FR, O = Company, OU = Unit, CN = user
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub:
+                    04:63:26:26:33:fd:ad:88:23:4b:56:42:6e:e6:d5:
+                    82:bd:aa:b8:5f:78:40:4b:ac:26:c1:ef:da:fb:83:
+                    4a:b3:f3:57:03:30:5a:f9:62:a2:01:88:41:c2:3e:
+                    d5:65:e8:6e:e4:e0:b1:5d:58:32:3e:e1:10:2b:db:
+                    92:41:33:9e:e3
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                DD:73:41:58:25:4B:2B:89:C3:20:DE:25:99:17:8E:E6:FE:68:AE:70
+            X509v3 Authority Key Identifier: 
+                keyid:C6:FD:F8:C3:0C:F7:24:22:4C:67:F5:44:9F:3B:59:9A:37:53:EF:56
+
+            X509v3 Key Usage: critical
+                Key Encipherment, Data Encipherment
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+    Signature Algorithm: sha256WithRSAEncryption
+         00:f8:15:cd:60:11:de:52:3e:14:2e:18:0f:a9:97:7c:d3:ff:
+         99:b3:97:7e:53:34:5d:4b:37:48:82:ee:12:d4:1d:bb:2f:3e:
+         3f:9a:46:f0:91:bd:52:40:25:10:4e:f1:5d:c1:b0:6a:02:7a:
+         e7:f6:02:ec:3d:cd:18:31:c9:8a:06:48:8b:9e:59:3e:0d:66:
+         c2:61:da:ec:9d:37:c2:af:ca:8d:3a:40:c8:6a:44:4c:ff:e7:
+         36:41:b6:46:80:20:f8:8b:14:64:2a:1c:6c:12:ea:d4:40:ba:
+         f5:1d:49:e0:ae:65:ca:2a:72:2c:4e:10:be:79:f3:41:c8:4b:
+         42:73:0d:6e:cc:4f:94:dc:8e:41:70:0c:0b:17:d2:9c:da:5c:
+         e6:13:ff:68:d5:24:c4:6b:50:72:40:1d:75:8b:42:9f:fe:8c:
+         a3:33:d2:65:97:f2:21:96:94:72:b0:e2:0c:2d:2c:3e:72:4d:
+         4e:ca:91:6b:8a:be:49:49:4f:f2:79:2a:55:a0:e8:ac:d7:ec:
+         e2:19:45:0e:bc:58:0b:a5:78:4f:12:d6:21:fd:33:d9:ee:5e:
+         b3:09:9b:1c:f3:5f:b5:27:95:73:bf:2a:b2:10:5e:bd:c3:31:
+         78:e6:c1:5c:d4:2f:2f:98:98:bb:0f:63:3e:bf:e0:81:72:63:
+         3f:b2:59:d1:46:d4:28:40:ca:0f:43:44:a0:44:0d:d5:21:a3:
+         4b:61:28:98:49:e2:0d:75:68:65:81:a3:55:a2:f6:d2:35:8b:
+         ef:75:ce:c7:b0:d8:c1:85:8d:d4:c2:bd:68:9c:ec:aa:a8:50:
+         05:59:12:a9:a7:20:ce:3a:4a:14:ee:72:d2:98:ff:02:fa:9b:
+         e7:7d:ab:bd:7d:6e:06:95:d2:75:ab:81:0d:c4:2f:b4:40:46:
+         1e:19:c3:b7:2e:a6:6b:d1:f7:2d:00:47:72:f6:64:15:63:b0:
+         60:a0:39:78:64:b9:76:1f:93:6b:6f:e5:72:07:6c:56:5c:77:
+         00:2f:1b:03:0b:46
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_entry_test.py::test_reason_inv_date_absent_absent</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>serial = 43F979C30F6C78AC3AB7A75963B2ACB36ACE388C
+revocation date = 2023-04-30 08:24:17
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_entry_test.py::test_reason_absent</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>serial = 34453ECC0EF36EC0551495FC69B29109CF9CE5E
+revocation date = 2023-04-30 08:24:28
+invalidity date = 2023-04-30 08:00:28
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_entry_test.py::test_inv_date_absent</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>serial = 72F44D160CE137D743449DE29DDD99B6AC58CE77
+revocation date = 2023-04-30 08:24:51
+reason = keyCompromise
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_entry_test.py::test_all</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>serial = 3052EDA4E78C8A15FDA68AE9A64E8EABC3D27B6D
+revocation date = 2023-04-30 08:25:05
+reason = cACompromise
+invalidity date = 2023-04-30 08:00:05
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_load_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_load_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_load_base64</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_issuer_dn</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_aki</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_crl_number</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_is_delta_absent</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_delta_number_absent</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_next_publish</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_next_publish_empty</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_get_revoked_unspecified</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_get_revoked_unspecified_invalidity_date</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_get_revoked_key_compromise</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_get_revoked_ca_compromise</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_not_revoked</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_save</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/crl_test.py::test_dump</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x04\xa50\x82\x03\r\x02\x01\x010\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x000\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA\x17\r230502090015Z\x17\r330429090015Z0\x82\x02a0%\x02\x14C\xf9y\xc3\x0flx\xac:\xb7\xa7Yc\xb2\xac\xb3j\xce8\x8c\x17\r230430082417Z0A\x02\x14\x03DS\xec\xc0\xef6\xec\x05QI_\xc6\x9b)\x10\x9c\xf9\xce^\x17\r230430082428Z0\x1a0\x18\x06\x03U\x1d\x18\x04\x11\x18\x0f20230430080028Z03\x02\x14\x1c\xe0w\xf1q\xbd\x91\xb5\xeb\x15\xc6]D\xfb\xff\xb7\xdd\xf4\xa4&quot;\x17\r230430082441Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0603\x02\x14r\xf4M\x16\x0c\xe17\xd7CD\x9d\xe2\x9d\xdd\x99\xb6\xacX\xcew\x17\r230430082451Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x010M\x02\x140R\xed\xa4\xe7\x8c\x8a\x15\xfd\xa6\x8a\xe9\xa6N\x8e\xab\xc3\xd2{m\x17\r230430082505Z0&amp;0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x020\x18\x06\x03U\x1d\x18\x04\x11\x18\x0f20230430080005Z03\x02\x14\x02/\xffi\xb2*\x1f\x1b\x1c\xb0\x1az\xf0((\xfa\xe1\xc8$i\x17\r230430082517Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0303\x02\x14M\xd1\xe3T!\xcf\xec\xa2Y|%y+\x08\xa7\x9f\xd8je#\x17\r230430082530Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0303\x02\x146.\xc6\x19\xbdmj\xe8\x91V\xfa^u\x13\x80\x9e\xb3z\xdf[\x17\r230430082555Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0403\x02\x14q\xac\x84\x15\xf2\x10^\x03\x1bI\xf4\x03\xed\x7f\xe6\xf6\xc5+\x06O\x17\r230430082608Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0503\x02\x14\x0c\x1b\xec\r\xea\xbd\xaf\t\x81&quot;N)\x9a\x88&amp;\x0efq\x1ew\x17\r230430082619Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\t03\x02\x14e.\xc0)\xaa3\xd9s\xf8y \xc8(g\xc2\xbe\x84\x88m\x96\x17\r230430082630Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\n\xa0M0K0\n\x06\x03U\x1d\x14\x04\x03\x02\x01\x030\x1f\x06\x03U\x1d#\x04\x180\x16\x80\x14\xc6\xfd\xf8\xc3\x0c\xf7$&quot;Lg\xf5D\x9f;Y\x9a7S\xefV0\x1c\x06\t+\x06\x01\x04\x01\x827\x15\x04\x04\x0f\x17\r230512090015Z0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x00\x03\x82\x01\x81\x00\x93\x07\xa8\x87wr]\x9fo\xc0\x8c\xa42\xb0\xa41\x9d\xe4\x04\xa2\x92qF\xa1\x1e{;X*-\xa6\x97,b@\x15\x1a\xe6\xdfxs\xd0\xe6%_\x03\xe4\x1a\xe6\xa8\t\xd5\xb3r\xeb\xf3\xd8\x84\xc0\x8c\x88\xa2#H\xa9?\xa2g\xa0\xc9\x87\xb7\xa3\xb5\xe1W\x93\x0c\xf0\xd0\xd2\x8f\x1de\r~\t\x1c\xba%Z\x8e$\xb3\x9dE\xd3)\x04\x99z\xec\xc3\xc1\xab\x12\xe9\x9d\xa9\xfe\xcaz\x8fZ7\xff\x1e\xfb\xb5\xac\xe8\xc6\xe7\x16\xeb\x9b24\xb5\xc3\xf5~uAs\x88\xbd\x04`&gt;\x9bU\x03)xP\x1c\x995\xbeEc\x152v]$6x,1\xbb\xd3\x9fm\x1au\x1a\\T#\x18x&quot;+2\xf3\xe1\x8a\x95X\x15\xb9\xed\xcb\x10\xbc8O\xfdU\xf2\xd9\x82\x03\x90W\xfa4\xf3++\xae\x99\xc9\x85\x00\xd9\t(w6I\x03\x88:k4+\x91\x8bGq\xdad@\xb3\x9f\xd6\xc4\x18\xb6S\x84N\xe5\xe8[\x9e\xbf@K\x00)\x84\xdb\xde\xae\xa6\x1b\xeb\xcb9m\xb1\xe5\xb2\xc9.\xa0\x9e\xc4\xec\xe1\xac&lt;\x15\xa2\x994\x1e\x87#\xc7_\xfa!%\x9f\x85\xac\x04\xcf)\xe2\x07\xc4\x8e\x9cf\xaa\x99\xd7\xcf\nH\x9b\x83\xd1.&lt;\xa7a\xc3\xc8\xe1\xa9\x8fJ\n\x1c\x12\x1d\x11\x04\x7f~\xc7L\xacp\xe4\xe6\x85H\xf8\xe0n\xf8I\x11\xccE\x1d\xb5\x82\r\x05g(\xcdyU\xdf\x16{\xdeX\x88~\xder\x84%\x90\x0f\xd5\x00%\xe4\xb8r\x982a\xe2\xb17\xc5\x90\x99\x83\xdb2 \x93R\xc4&gt;C\xffjsq&#x27; 
+
+MIIEpTCCAw0CAQEwDQYJKoZIhvcNAQELBQAwJzEQMA4GA1UECgwHQ29tcGFueTETMBEGA1UEAwwKRXhhbXBsZSBDQRcNMjMwNTAyMDkwMDE1WhcNMzMwNDI5MDkwMDE1WjCCAmEwJQIUQ/l5ww9seKw6t6dZY7Kss2rOOIwXDTIzMDQzMDA4MjQxN1owQQIUA0RT7MDvNuwFUUlfxpspEJz5zl4XDTIzMDQzMDA4MjQyOFowGjAYBgNVHRgEERgPMjAyMzA0MzAwODAwMjhaMDMCFBzgd/FxvZG16xXGXUT7/7fd9KQiFw0yMzA0MzAwODI0NDFaMAwwCgYDVR0VBAMKAQYwMwIUcvRNFgzhN9dDRJ3ind2ZtqxYzncXDTIzMDQzMDA4MjQ1MVowDDAKBgNVHRUEAwoBATBNAhQwUu2k54yKFf2miummTo6rw9J7bRcNMjMwNDMwMDgyNTA1WjAmMAoGA1UdFQQDCgECMBgGA1UdGAQRGA8yMDIzMDQzMDA4MDAwNVowMwIUAi//abIqHxscsBp68Cgo+uHIJGkXDTIzMDQzMDA4MjUxN1owDDAKBgNVHRUEAwoBAzAzAhRN0eNUIc/soll8JXkrCKef2GplIxcNMjMwNDMwMDgyNTMwWjAMMAoGA1UdFQQDCgEDMDMCFDYuxhm9bWrokVb6XnUTgJ6zet9bFw0yMzA0MzAwODI1NTVaMAwwCgYDVR0VBAMKAQQwMwIUcayEFfIQXgMbSfQD7X/m9sUrBk8XDTIzMDQzMDA4MjYwOFowDDAKBgNVHRUEAwoBBTAzAhQMG+wN6r2vCYEiTimaiCYOZnEedxcNMjMwNDMwMDgyNjE5WjAMMAoGA1UdFQQDCgEJMDMCFGUuwCmqM9lz+HkgyChnwr6EiG2WFw0yMzA0MzAwODI2MzBaMAwwCgYDVR0VBAMKAQqgTTBLMAoGA1UdFAQDAgEDMB8GA1UdIwQYMBaAFMb9+MMM9yQiTGf1RJ87WZo3U+9WMBwGCSsGAQQBgjcVBAQPFw0yMzA1MTIwOTAwMTVaMA0GCSqGSIb3DQEBCwUAA4IBgQCTB6iHd3Jdn2/AjKQysKQxneQEopJxRqEeeztYKi2mlyxiQBUa5t94c9DmJV8D5BrmqAnVs3Lr89iEwIyIoiNIqT+iZ6DJh7ejteFXkwzw0NKPHWUNfgkcuiVajiSznUXTKQSZeuzDwasS6Z2p/sp6j1o3/x77tazoxucW65syNLXD9X51QXOIvQRgPptVAyl4UByZNb5FYxUydl0kNngsMbvTn20adRpcVCMYeCIrMvPhipVYFbntyxC8OE/9VfLZggOQV/o08ysrrpnJhQDZCSh3NkkDiDprNCuRi0dx2mRAs5/WxBi2U4RO5ehbnr9ASwAphNverqYb68s5bbHlsskuoJ7E7OGsPBWimTQehyPHX/ohJZ+FrATPKeIHxI6cZqqZ188KSJuD0S48p2HDyOGpj0oKHBIdEQR/fsdMrHDk5oVI+OBu+EkRzEUdtYINBWcozXlV3xZ73liIft5yhCWQD9UAJeS4cpgyYeKxN8WQmYPbMiCTUsQ+Q/9qc3E= 
+
+-----BEGIN X509 CRL-----
+MIIEpTCCAw0CAQEwDQYJKoZIhvcNAQELBQAwJzEQMA4GA1UECgwHQ29tcGFueTET
+MBEGA1UEAwwKRXhhbXBsZSBDQRcNMjMwNTAyMDkwMDE1WhcNMzMwNDI5MDkwMDE1
+WjCCAmEwJQIUQ/l5ww9seKw6t6dZY7Kss2rOOIwXDTIzMDQzMDA4MjQxN1owQQIU
+A0RT7MDvNuwFUUlfxpspEJz5zl4XDTIzMDQzMDA4MjQyOFowGjAYBgNVHRgEERgP
+MjAyMzA0MzAwODAwMjhaMDMCFBzgd/FxvZG16xXGXUT7/7fd9KQiFw0yMzA0MzAw
+ODI0NDFaMAwwCgYDVR0VBAMKAQYwMwIUcvRNFgzhN9dDRJ3ind2ZtqxYzncXDTIz
+MDQzMDA4MjQ1MVowDDAKBgNVHRUEAwoBATBNAhQwUu2k54yKFf2miummTo6rw9J7
+bRcNMjMwNDMwMDgyNTA1WjAmMAoGA1UdFQQDCgECMBgGA1UdGAQRGA8yMDIzMDQz
+MDA4MDAwNVowMwIUAi//abIqHxscsBp68Cgo+uHIJGkXDTIzMDQzMDA4MjUxN1ow
+DDAKBgNVHRUEAwoBAzAzAhRN0eNUIc/soll8JXkrCKef2GplIxcNMjMwNDMwMDgy
+NTMwWjAMMAoGA1UdFQQDCgEDMDMCFDYuxhm9bWrokVb6XnUTgJ6zet9bFw0yMzA0
+MzAwODI1NTVaMAwwCgYDVR0VBAMKAQQwMwIUcayEFfIQXgMbSfQD7X/m9sUrBk8X
+DTIzMDQzMDA4MjYwOFowDDAKBgNVHRUEAwoBBTAzAhQMG+wN6r2vCYEiTimaiCYO
+ZnEedxcNMjMwNDMwMDgyNjE5WjAMMAoGA1UdFQQDCgEJMDMCFGUuwCmqM9lz+Hkg
+yChnwr6EiG2WFw0yMzA0MzAwODI2MzBaMAwwCgYDVR0VBAMKAQqgTTBLMAoGA1Ud
+FAQDAgEDMB8GA1UdIwQYMBaAFMb9+MMM9yQiTGf1RJ87WZo3U+9WMBwGCSsGAQQB
+gjcVBAQPFw0yMzA1MTIwOTAwMTVaMA0GCSqGSIb3DQEBCwUAA4IBgQCTB6iHd3Jd
+n2/AjKQysKQxneQEopJxRqEeeztYKi2mlyxiQBUa5t94c9DmJV8D5BrmqAnVs3Lr
+89iEwIyIoiNIqT+iZ6DJh7ejteFXkwzw0NKPHWUNfgkcuiVajiSznUXTKQSZeuzD
+wasS6Z2p/sp6j1o3/x77tazoxucW65syNLXD9X51QXOIvQRgPptVAyl4UByZNb5F
+YxUydl0kNngsMbvTn20adRpcVCMYeCIrMvPhipVYFbntyxC8OE/9VfLZggOQV/o0
+8ysrrpnJhQDZCSh3NkkDiDprNCuRi0dx2mRAs5/WxBi2U4RO5ehbnr9ASwAphNve
+rqYb68s5bbHlsskuoJ7E7OGsPBWimTQehyPHX/ohJZ+FrATPKeIHxI6cZqqZ188K
+SJuD0S48p2HDyOGpj0oKHBIdEQR/fsdMrHDk5oVI+OBu+EkRzEUdtYINBWcozXlV
+3xZ73liIft5yhCWQD9UAJeS4cpgyYeKxN8WQmYPbMiCTUsQ+Q/9qc3E=
+-----END X509 CRL-----
+ 
+
+Certificate Revocation List (CRL):
+        Version 2 (0x1)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: O = Company, CN = Example CA
+        Last Update: May  2 09:00:15 2023 GMT
+        Next Update: Apr 29 09:00:15 2033 GMT
+        CRL extensions:
+            X509v3 CRL Number: 
+                3
+            X509v3 Authority Key Identifier: 
+                keyid:C6:FD:F8:C3:0C:F7:24:22:4C:67:F5:44:9F:3B:59:9A:37:53:EF:56
+
+            1.3.6.1.4.1.311.21.4: 
+                .
+230512090015Z
+Revoked Certificates:
+    Serial Number: 43F979C30F6C78AC3AB7A75963B2ACB36ACE388C
+        Revocation Date: Apr 30 08:24:17 2023 GMT
+    Serial Number: 034453ECC0EF36EC0551495FC69B29109CF9CE5E
+        Revocation Date: Apr 30 08:24:28 2023 GMT
+        CRL entry extensions:
+            Invalidity Date: 
+                Apr 30 08:00:28 2023 GMT
+    Serial Number: 1CE077F171BD91B5EB15C65D44FBFFB7DDF4A422
+        Revocation Date: Apr 30 08:24:41 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Certificate Hold
+    Serial Number: 72F44D160CE137D743449DE29DDD99B6AC58CE77
+        Revocation Date: Apr 30 08:24:51 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Key Compromise
+    Serial Number: 3052EDA4E78C8A15FDA68AE9A64E8EABC3D27B6D
+        Revocation Date: Apr 30 08:25:05 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                CA Compromise
+            Invalidity Date: 
+                Apr 30 08:00:05 2023 GMT
+    Serial Number: 022FFF69B22A1F1B1CB01A7AF02828FAE1C82469
+        Revocation Date: Apr 30 08:25:17 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Affiliation Changed
+    Serial Number: 4DD1E35421CFECA2597C25792B08A79FD86A6523
+        Revocation Date: Apr 30 08:25:30 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Affiliation Changed
+    Serial Number: 362EC619BD6D6AE89156FA5E7513809EB37ADF5B
+        Revocation Date: Apr 30 08:25:55 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Superseded
+    Serial Number: 71AC8415F2105E031B49F403ED7FE6F6C52B064F
+        Revocation Date: Apr 30 08:26:08 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Cessation Of Operation
+    Serial Number: 0C1BEC0DEABDAF0981224E299A88260E66711E77
+        Revocation Date: Apr 30 08:26:19 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Privilege Withdrawn
+    Serial Number: 652EC029AA33D973F87920C82867C2BE84886D96
+        Revocation Date: Apr 30 08:26:30 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                AA Compromise
+    Signature Algorithm: sha256WithRSAEncryption
+         93:07:a8:87:77:72:5d:9f:6f:c0:8c:a4:32:b0:a4:31:9d:e4:
+         04:a2:92:71:46:a1:1e:7b:3b:58:2a:2d:a6:97:2c:62:40:15:
+         1a:e6:df:78:73:d0:e6:25:5f:03:e4:1a:e6:a8:09:d5:b3:72:
+         eb:f3:d8:84:c0:8c:88:a2:23:48:a9:3f:a2:67:a0:c9:87:b7:
+         a3:b5:e1:57:93:0c:f0:d0:d2:8f:1d:65:0d:7e:09:1c:ba:25:
+         5a:8e:24:b3:9d:45:d3:29:04:99:7a:ec:c3:c1:ab:12:e9:9d:
+         a9:fe:ca:7a:8f:5a:37:ff:1e:fb:b5:ac:e8:c6:e7:16:eb:9b:
+         32:34:b5:c3:f5:7e:75:41:73:88:bd:04:60:3e:9b:55:03:29:
+         78:50:1c:99:35:be:45:63:15:32:76:5d:24:36:78:2c:31:bb:
+         d3:9f:6d:1a:75:1a:5c:54:23:18:78:22:2b:32:f3:e1:8a:95:
+         58:15:b9:ed:cb:10:bc:38:4f:fd:55:f2:d9:82:03:90:57:fa:
+         34:f3:2b:2b:ae:99:c9:85:00:d9:09:28:77:36:49:03:88:3a:
+         6b:34:2b:91:8b:47:71:da:64:40:b3:9f:d6:c4:18:b6:53:84:
+         4e:e5:e8:5b:9e:bf:40:4b:00:29:84:db:de:ae:a6:1b:eb:cb:
+         39:6d:b1:e5:b2:c9:2e:a0:9e:c4:ec:e1:ac:3c:15:a2:99:34:
+         1e:87:23:c7:5f:fa:21:25:9f:85:ac:04:cf:29:e2:07:c4:8e:
+         9c:66:aa:99:d7:cf:0a:48:9b:83:d1:2e:3c:a7:61:c3:c8:e1:
+         a9:8f:4a:0a:1c:12:1d:11:04:7f:7e:c7:4c:ac:70:e4:e6:85:
+         48:f8:e0:6e:f8:49:11:cc:45:1d:b5:82:0d:05:67:28:cd:79:
+         55:df:16:7b:de:58:88:7e:de:72:84:25:90:0f:d5:00:25:e4:
+         b8:72:98:32:61:e2:b1:37:c5:90:99:83:db:32:20:93:52:c4:
+         3e:43:ff:6a:73:71
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_load_rsa_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_load_rsa_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_load_rsa_base64_string</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_load_ecdsa_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_load_ecdsa_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_load_ecdsa_base64_string</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_subject_dn</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_san</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_rsa_key_type</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_rsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_rsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_ecdsa_key_type</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_ecdsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_ecdsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_generate_rsa_csr</td>
+          <td class="col-duration">0.03</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_generate_ecdsa_csr</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_generate_rdn_csr</td>
+          <td class="col-duration">0.02</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_save_rsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_save_ecdsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_dump_rsa</td>
+          <td class="col-duration">0.03</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x04}0\x82\x02\xe5\x02\x01\x000!1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\r0\x0b\x06\x03U\x04\x03\x0c\x04user0\x82\x01\xa20\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01\x05\x00\x03\x82\x01\x8f\x000\x82\x01\x8a\x02\x82\x01\x81\x00\xbd\xc0{&amp;2rg\xf3\xfb\x7f\x1d9\xca\xf0F?]\x1a\x80\x9a\xc4.\x7f\xb3&gt;Z\xa4~`,rt\xa8\xb4\x04)\x96zC\xde\xe2\xef\xc5\xe0\x16\xfbL\xc7\xab\xeb-\xcd\x17H\x98\x07\xaf\x8aLH\n\x9d\xbd\x92\x17\x06?#\xbfxoLF\x1bk\xd5D\xc3U&lt;\xec7)\x92\x13\xb2\x8b\xa6\xc8B\x02D\x97`\xdd/\xb3\x15\x0bG\x05\x89\xe4\xdaU&gt;&quot;\x9a\x8cEGQr\xa10^W\xabU\xa1\xc4\x9er\x8d\xb5\xf8Q\x92\\-kH\xd7\x18\x8d\xea\xbbC\r\xa9\x07\x15\xa7\xbcp\x08\xe9P\xec\x96\xb6/\xfd\x10\x85\xa1\xf1\xe6\x1f\xce\x14\xb0\x9d\xbc|\xb2o=\x99q\x18\xe7\xfcPst\x9fJ\x03\xd8\xc0\xe1\xc5nj\xb4I\xbed\x1d\xd7\x9c\x04\xb6C\xdd\xbc\xb4\xbc\xdb\x96%Z;\xe3\x1a\xf6o!\xdcL\x91\xcctl\x9eD\x99l\xdc;\x82\xb28\xdf\x91\x9b\xfd2\x9e\x9e\xed\x11\x15\xf2^Z\x844\xa9-=o\x1dl\x02u)\xad\\^\xf8l\xf96\xeb\xa4\x15\xc6[9o\xbb\xe4(=\x11\x9ed\xe3\x07%(3\x9f\x97\x83\x03\xa9X\xa4\xddy\x05]\x91V\xb1\xb3\x1dG\xba\xe31\xef\xd6\xd6\x92\x8c8\xd4\xa3\x1a@5q\x83VS\x93\xff=/pI,\xaeBK\xdb\xdb\x15\x98\tS\xb6\xf7R&gt;\xfc\x7f\xf3r\xcd\xdf(\xb9&lt;f\x0c\xac\xc7\xc3\x13\x0c`\x14\xbbS\xd1\xeb\xd6\&#x27;n\xdf\x9a\xa3&quot;\x84s\xe7L\&#x27;\&#x27;b\xc4\x04_\xb0~t\x8a\xe8\xa82\xbb\xf3w\xe7\xff\xadIw=\x02\x03\x01\x00\x01\xa0\x82\x01\x150\x82\x01\x11\x06\t*\x86H\x86\xf7\r\x01\t\x0e1\x82\x01\x020\x81\xff0\x81\xfc\x06\x03U\x1d\x11\x04\x81\xf40\x81\xf1\x82\x0fwww.example.com\x87\x04\x7f\x00\x00\x01\x86\x16http://www.example.com\x81\x11email@example.com\xa0\x1f\x06\n+\x06\x01\x04\x01\x827\x14\x02\x03\xa0\x11\x0c\x0fupn@example.com\xa0\x1a\x06\t+\x06\x01\x04\x01\x827\x19\x01\xa0\r\x04\x0b#\x83\x11\x11\x11\x11\x11\xfbw/\x94\xa0)\x06\x08+\x06\x01\x05\x05\x07\x08\t\xa0\x1d\x0c\x1bsmtpUTF8Mailbox@example.com\x88\x07+\x06\x01\x04\x01\x82W\xa4&lt;0:1\x140\x12\x06\n\t\x92&amp;\x89\x93\xf2,d\x01\x19\x16\x04LDAP1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x100\x0e\x06\x03U\x04\x03\x0c\x07machine0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x00\x03\x82\x01\x81\x00I\xef\x83m\xd5\n\x08\x81\xe2.\xa7\x00\xe0?B\xf17Fk\x03Hw\x04G\x06\xfc\x8f)\x08\&#x27;\xf7!\xe6\x80*\x9eT\xc3\xa8\x04\xeaR\xdc{a\xc2\xa6Z\xcb\xfb\x82\xd2o\x92\xa4e\x96XS\xed\xdc\x81*\x1a\xe0\x08\x0c\xa7\xb4\xc4\x88\x8a\xbaDo;\xbbI^\x14\x18W\xf8\xaa\xb4\x7f\xd0p\xcd\x0b\xca\xa1\x01\xdbr\x0f\xa9`&quot;oCq\xd5\xd2]\xa7\x83\xdf\xdd}An\xc4\x9f|\xe21i&lt;Re\x06s\xd5\x9b\xc7@\xad\x9c\xe1@\xce\x13g\xfd\xceU2\xfb\xe1\x0f\x8e_7-\x8e\xf7II\x8c\x87R\xf0\x1fF\x84\x80\xa7\xf2\x9ax\xd75#\xf3\x99\xbeA\xbb\x9cWR4uj\xf9\x9f$\xbb\x95\xfa\xdd\xc4\x86\xfc\x1b\x8dI#\xabg\xb6{\xac\xbb1+\xe8\xb28\xd5\xe9c+&amp;g\x86\xa7nG\xa2\x83\xa0\xa74$I\x0ca\x1bG\x10\x94&gt;42\x18\xf3E\xc4\x93N_\xfe|\xcf\xb7`\x16\x92\xe5d\xb4\xab\xc0\x1b\x98\x96Q?\xd2\x01\xdbQ \x16\x88M\xea\x85\xd0Iphi~\x86\xe8]pr\x84\xc4/4\\X\xe0\xff\xff\x9c|\&#x27;\xa1l\xaf\x99\xa8\xb5k\xca\t*\x00M\&#x27;L@\xf0\xec\xc9\x8b\xc2\x19\xb6K\x8a\xe4\x16\xc0\x0c7T\x96S\xe4\n\xec\xc9\xc1\x9c\x12\xea\xc2:8#\x8f\xb5\xf0 VD\xc3\x80\x08_\x05\xb3\xf9+\xd0\x13^\xd3\xad\xc4\x1ah\xb4\xf32L\xc9\xa2\xcc\x12\x12D\x98\x134\xe7\xa0[|\xd2\xae0\xac\xcf\xfc\x9c\x8dV\xc0+\xfa\xca\ns\x87\x1e\xa0&#x27; 
+
+MIIEfTCCAuUCAQAwITEQMA4GA1UECgwHQ29tcGFueTENMAsGA1UEAwwEdXNlcjCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBAL3AeyYycmfz+38dOcrwRj9dGoCaxC5/sz5apH5gLHJ0qLQEKZZ6Q97i78XgFvtMx6vrLc0XSJgHr4pMSAqdvZIXBj8jv3hvTEYba9VEw1U87DcpkhOyi6bIQgJEl2DdL7MVC0cFieTaVT4imoxFR1FyoTBeV6tVocSeco21+FGSXC1rSNcYjeq7Qw2pBxWnvHAI6VDslrYv/RCFofHmH84UsJ28fLJvPZlxGOf8UHN0n0oD2MDhxW5qtEm+ZB3XnAS2Q928tLzbliVaO+Ma9m8h3EyRzHRsnkSZbNw7grI435Gb/TKenu0RFfJeWoQ0qS09bx1sAnUprVxe+Gz5NuukFcZbOW+75Cg9EZ5k4wclKDOfl4MDqVik3XkFXZFWsbMdR7rjMe/W1pKMONSjGkA1cYNWU5P/PS9wSSyuQkvb2xWYCVO291I+/H/zcs3fKLk8Zgysx8MTDGAUu1PR69Ynbt+aoyKEc+dMJydixARfsH50iuioMrvzd+f/rUl3PQIDAQABoIIBFTCCAREGCSqGSIb3DQEJDjGCAQIwgf8wgfwGA1UdEQSB9DCB8YIPd3d3LmV4YW1wbGUuY29thwR/AAABhhZodHRwOi8vd3d3LmV4YW1wbGUuY29tgRFlbWFpbEBleGFtcGxlLmNvbaAfBgorBgEEAYI3FAIDoBEMD3VwbkBleGFtcGxlLmNvbaAaBgkrBgEEAYI3GQGgDQQLI4MREREREft3L5SgKQYIKwYBBQUHCAmgHQwbc210cFVURjhNYWlsYm94QGV4YW1wbGUuY29tiAcrBgEEAYJXpDwwOjEUMBIGCgmSJomT8ixkARkWBExEQVAxEDAOBgNVBAoMB0NvbXBhbnkxEDAOBgNVBAMMB21hY2hpbmUwDQYJKoZIhvcNAQELBQADggGBAEnvg23VCgiB4i6nAOA/QvE3RmsDSHcERwb8jykIJ/ch5oAqnlTDqATqUtx7YcKmWsv7gtJvkqRlllhT7dyBKhrgCAyntMSIirpEbzu7SV4UGFf4qrR/0HDNC8qhAdtyD6lgIm9DcdXSXaeD3919QW7En3ziMWk8UmUGc9Wbx0CtnOFAzhNn/c5VMvvhD45fNy2O90lJjIdS8B9GhICn8pp41zUj85m+QbucV1I0dWr5nyS7lfrdxIb8G41JI6tntnusuzEr6LI41eljKyZnhqduR6KDoKc0JEkMYRtHEJQ+NDIY80XEk05f/nzPt2AWkuVktKvAG5iWUT/SAdtRIBaITeqF0ElwaGl+huhdcHKExC80XFjg//+cfCehbK+ZqLVrygkqAE0nTEDw7MmLwhm2S4rkFsAMN1SWU+QK7MnBnBLqwjo4I4+18CBWRMOACF8Fs/kr0BNe063EGmi08zJMyaLMEhJEmBM056BbfNKuMKzP/JyNVsAr+soKc4ceoA== 
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIIEfTCCAuUCAQAwITEQMA4GA1UECgwHQ29tcGFueTENMAsGA1UEAwwEdXNlcjCC
+AaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBAL3AeyYycmfz+38dOcrwRj9d
+GoCaxC5/sz5apH5gLHJ0qLQEKZZ6Q97i78XgFvtMx6vrLc0XSJgHr4pMSAqdvZIX
+Bj8jv3hvTEYba9VEw1U87DcpkhOyi6bIQgJEl2DdL7MVC0cFieTaVT4imoxFR1Fy
+oTBeV6tVocSeco21+FGSXC1rSNcYjeq7Qw2pBxWnvHAI6VDslrYv/RCFofHmH84U
+sJ28fLJvPZlxGOf8UHN0n0oD2MDhxW5qtEm+ZB3XnAS2Q928tLzbliVaO+Ma9m8h
+3EyRzHRsnkSZbNw7grI435Gb/TKenu0RFfJeWoQ0qS09bx1sAnUprVxe+Gz5Nuuk
+FcZbOW+75Cg9EZ5k4wclKDOfl4MDqVik3XkFXZFWsbMdR7rjMe/W1pKMONSjGkA1
+cYNWU5P/PS9wSSyuQkvb2xWYCVO291I+/H/zcs3fKLk8Zgysx8MTDGAUu1PR69Yn
+bt+aoyKEc+dMJydixARfsH50iuioMrvzd+f/rUl3PQIDAQABoIIBFTCCAREGCSqG
+SIb3DQEJDjGCAQIwgf8wgfwGA1UdEQSB9DCB8YIPd3d3LmV4YW1wbGUuY29thwR/
+AAABhhZodHRwOi8vd3d3LmV4YW1wbGUuY29tgRFlbWFpbEBleGFtcGxlLmNvbaAf
+BgorBgEEAYI3FAIDoBEMD3VwbkBleGFtcGxlLmNvbaAaBgkrBgEEAYI3GQGgDQQL
+I4MREREREft3L5SgKQYIKwYBBQUHCAmgHQwbc210cFVURjhNYWlsYm94QGV4YW1w
+bGUuY29tiAcrBgEEAYJXpDwwOjEUMBIGCgmSJomT8ixkARkWBExEQVAxEDAOBgNV
+BAoMB0NvbXBhbnkxEDAOBgNVBAMMB21hY2hpbmUwDQYJKoZIhvcNAQELBQADggGB
+AEnvg23VCgiB4i6nAOA/QvE3RmsDSHcERwb8jykIJ/ch5oAqnlTDqATqUtx7YcKm
+Wsv7gtJvkqRlllhT7dyBKhrgCAyntMSIirpEbzu7SV4UGFf4qrR/0HDNC8qhAdty
+D6lgIm9DcdXSXaeD3919QW7En3ziMWk8UmUGc9Wbx0CtnOFAzhNn/c5VMvvhD45f
+Ny2O90lJjIdS8B9GhICn8pp41zUj85m+QbucV1I0dWr5nyS7lfrdxIb8G41JI6tn
+tnusuzEr6LI41eljKyZnhqduR6KDoKc0JEkMYRtHEJQ+NDIY80XEk05f/nzPt2AW
+kuVktKvAG5iWUT/SAdtRIBaITeqF0ElwaGl+huhdcHKExC80XFjg//+cfCehbK+Z
+qLVrygkqAE0nTEDw7MmLwhm2S4rkFsAMN1SWU+QK7MnBnBLqwjo4I4+18CBWRMOA
+CF8Fs/kr0BNe063EGmi08zJMyaLMEhJEmBM056BbfNKuMKzP/JyNVsAr+soKc4ce
+oA==
+-----END CERTIFICATE REQUEST-----
+ 
+
+Certificate Request:
+    Data:
+        Version: 1 (0x0)
+        Subject: O = Company, CN = user
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (3072 bit)
+                Modulus:
+                    00:bd:c0:7b:26:32:72:67:f3:fb:7f:1d:39:ca:f0:
+                    46:3f:5d:1a:80:9a:c4:2e:7f:b3:3e:5a:a4:7e:60:
+                    2c:72:74:a8:b4:04:29:96:7a:43:de:e2:ef:c5:e0:
+                    16:fb:4c:c7:ab:eb:2d:cd:17:48:98:07:af:8a:4c:
+                    48:0a:9d:bd:92:17:06:3f:23:bf:78:6f:4c:46:1b:
+                    6b:d5:44:c3:55:3c:ec:37:29:92:13:b2:8b:a6:c8:
+                    42:02:44:97:60:dd:2f:b3:15:0b:47:05:89:e4:da:
+                    55:3e:22:9a:8c:45:47:51:72:a1:30:5e:57:ab:55:
+                    a1:c4:9e:72:8d:b5:f8:51:92:5c:2d:6b:48:d7:18:
+                    8d:ea:bb:43:0d:a9:07:15:a7:bc:70:08:e9:50:ec:
+                    96:b6:2f:fd:10:85:a1:f1:e6:1f:ce:14:b0:9d:bc:
+                    7c:b2:6f:3d:99:71:18:e7:fc:50:73:74:9f:4a:03:
+                    d8:c0:e1:c5:6e:6a:b4:49:be:64:1d:d7:9c:04:b6:
+                    43:dd:bc:b4:bc:db:96:25:5a:3b:e3:1a:f6:6f:21:
+                    dc:4c:91:cc:74:6c:9e:44:99:6c:dc:3b:82:b2:38:
+                    df:91:9b:fd:32:9e:9e:ed:11:15:f2:5e:5a:84:34:
+                    a9:2d:3d:6f:1d:6c:02:75:29:ad:5c:5e:f8:6c:f9:
+                    36:eb:a4:15:c6:5b:39:6f:bb:e4:28:3d:11:9e:64:
+                    e3:07:25:28:33:9f:97:83:03:a9:58:a4:dd:79:05:
+                    5d:91:56:b1:b3:1d:47:ba:e3:31:ef:d6:d6:92:8c:
+                    38:d4:a3:1a:40:35:71:83:56:53:93:ff:3d:2f:70:
+                    49:2c:ae:42:4b:db:db:15:98:09:53:b6:f7:52:3e:
+                    fc:7f:f3:72:cd:df:28:b9:3c:66:0c:ac:c7:c3:13:
+                    0c:60:14:bb:53:d1:eb:d6:27:6e:df:9a:a3:22:84:
+                    73:e7:4c:27:27:62:c4:04:5f:b0:7e:74:8a:e8:a8:
+                    32:bb:f3:77:e7:ff:ad:49:77:3d
+                Exponent: 65537 (0x10001)
+        Attributes:
+        Requested Extensions:
+            X509v3 Subject Alternative Name: 
+                DNS:www.example.com, IP Address:127.0.0.1, URI:http://www.example.com, email:email@example.com, othername:&lt;unsupported&gt;, othername:&lt;unsupported&gt;, othername:&lt;unsupported&gt;, Registered ID:1.3.6.1.4.1.343, DirName:/DC=LDAP/O=Company/CN=machine
+    Signature Algorithm: sha256WithRSAEncryption
+         49:ef:83:6d:d5:0a:08:81:e2:2e:a7:00:e0:3f:42:f1:37:46:
+         6b:03:48:77:04:47:06:fc:8f:29:08:27:f7:21:e6:80:2a:9e:
+         54:c3:a8:04:ea:52:dc:7b:61:c2:a6:5a:cb:fb:82:d2:6f:92:
+         a4:65:96:58:53:ed:dc:81:2a:1a:e0:08:0c:a7:b4:c4:88:8a:
+         ba:44:6f:3b:bb:49:5e:14:18:57:f8:aa:b4:7f:d0:70:cd:0b:
+         ca:a1:01:db:72:0f:a9:60:22:6f:43:71:d5:d2:5d:a7:83:df:
+         dd:7d:41:6e:c4:9f:7c:e2:31:69:3c:52:65:06:73:d5:9b:c7:
+         40:ad:9c:e1:40:ce:13:67:fd:ce:55:32:fb:e1:0f:8e:5f:37:
+         2d:8e:f7:49:49:8c:87:52:f0:1f:46:84:80:a7:f2:9a:78:d7:
+         35:23:f3:99:be:41:bb:9c:57:52:34:75:6a:f9:9f:24:bb:95:
+         fa:dd:c4:86:fc:1b:8d:49:23:ab:67:b6:7b:ac:bb:31:2b:e8:
+         b2:38:d5:e9:63:2b:26:67:86:a7:6e:47:a2:83:a0:a7:34:24:
+         49:0c:61:1b:47:10:94:3e:34:32:18:f3:45:c4:93:4e:5f:fe:
+         7c:cf:b7:60:16:92:e5:64:b4:ab:c0:1b:98:96:51:3f:d2:01:
+         db:51:20:16:88:4d:ea:85:d0:49:70:68:69:7e:86:e8:5d:70:
+         72:84:c4:2f:34:5c:58:e0:ff:ff:9c:7c:27:a1:6c:af:99:a8:
+         b5:6b:ca:09:2a:00:4d:27:4c:40:f0:ec:c9:8b:c2:19:b6:4b:
+         8a:e4:16:c0:0c:37:54:96:53:e4:0a:ec:c9:c1:9c:12:ea:c2:
+         3a:38:23:8f:b5:f0:20:56:44:c3:80:08:5f:05:b3:f9:2b:d0:
+         13:5e:d3:ad:c4:1a:68:b4:f3:32:4c:c9:a2:cc:12:12:44:98:
+         13:34:e7:a0:5b:7c:d2:ae:30:ac:cf:fc:9c:8d:56:c0:2b:fa:
+         ca:0a:73:87:1e:a0
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/csr_test.py::test_dump_ecdsa</td>
+          <td class="col-duration">0.02</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x81\xdd0\x81\x84\x02\x01\x000&quot;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x0e0\x0c\x06\x03U\x04\x03\x0c\x05ecdsa0Y0\x13\x06\x07*\x86H\xce=\x02\x01\x06\x08*\x86H\xce=\x03\x01\x07\x03B\x00\x04c&amp;&amp;3\xfd\xad\x88#KVBn\xe6\xd5\x82\xbd\xaa\xb8_x@K\xac&amp;\xc1\xef\xda\xfb\x83J\xb3\xf3W\x030Z\xf9b\xa2\x01\x88A\xc2&gt;\xd5e\xe8n\xe4\xe0\xb1]X2&gt;\xe1\x10+\xdb\x92A3\x9e\xe3\xa0\x000\n\x06\x08*\x86H\xce=\x04\x03\x02\x03H\x000E\x02 Zu\xc9&gt;\x9cLS\xdf\x17\x86\xe3Z\x89\xc6n\xea\xa7*\x9c\xea\xce\xd4\xb3\x87\x97\x87_o\x83D\x07\x84\x02!\x00\xcb0\x8b\xe0mT\xc6\\]\xa3\xfa7=6\x14\x04,\x8fQ\x01BP\x07\xb6\xd8}@\x07\xfbZ\xd5\x08&#x27; 
+
+MIHdMIGEAgEAMCIxEDAOBgNVBAoMB0NvbXBhbnkxDjAMBgNVBAMMBWVjZHNhMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe46AAMAoGCCqGSM49BAMCA0gAMEUCIFp1yT6cTFPfF4bjWonGbuqnKpzqztSzh5eHX2+DRAeEAiEAyzCL4G1Uxlxdo/o3PTYUBCyPUQFCUAe22H1AB/ta1Qg= 
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIHdMIGEAgEAMCIxEDAOBgNVBAoMB0NvbXBhbnkxDjAMBgNVBAMMBWVjZHNhMFkw
+EwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wm
+we/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe46AAMAoGCCqG
+SM49BAMCA0gAMEUCIFp1yT6cTFPfF4bjWonGbuqnKpzqztSzh5eHX2+DRAeEAiEA
+yzCL4G1Uxlxdo/o3PTYUBCyPUQFCUAe22H1AB/ta1Qg=
+-----END CERTIFICATE REQUEST-----
+ 
+
+Certificate Request:
+    Data:
+        Version: 1 (0x0)
+        Subject: O = Company, CN = ecdsa
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub:
+                    04:63:26:26:33:fd:ad:88:23:4b:56:42:6e:e6:d5:
+                    82:bd:aa:b8:5f:78:40:4b:ac:26:c1:ef:da:fb:83:
+                    4a:b3:f3:57:03:30:5a:f9:62:a2:01:88:41:c2:3e:
+                    d5:65:e8:6e:e4:e0:b1:5d:58:32:3e:e1:10:2b:db:
+                    92:41:33:9e:e3
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        Attributes:
+            a0:00
+    Signature Algorithm: ecdsa-with-SHA256
+         30:45:02:20:5a:75:c9:3e:9c:4c:53:df:17:86:e3:5a:89:c6:
+         6e:ea:a7:2a:9c:ea:ce:d4:b3:87:97:87:5f:6f:83:44:07:84:
+         02:21:00:cb:30:8b:e0:6d:54:c6:5c:5d:a3:fa:37:3d:36:14:
+         04:2c:8f:51:01:42:50:07:b6:d8:7d:40:07:fb:5a:d5:08
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_load_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_load_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_load_base64</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_issuer_dn</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_aki</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_crl_number</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_is_delta</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_delta_number</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_next_publish</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_get_revoked_unspecified</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_get_revoked_unspecified_invalidity_date</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_get_revoked_key_compromise</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_get_revoked_ca_compromise</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_not_revoked</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/delta_test.py::test_dump</td>
+          <td class="col-duration">0.03</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x04u0\x82\x02\xdd\x02\x01\x010\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x000\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA\x17\r230502090015Z\x17\r330429090015Z0\x82\x02a0%\x02\x14C\xf9y\xc3\x0flx\xac:\xb7\xa7Yc\xb2\xac\xb3j\xce8\x8c\x17\r230430082417Z0A\x02\x14\x03DS\xec\xc0\xef6\xec\x05QI_\xc6\x9b)\x10\x9c\xf9\xce^\x17\r230430082428Z0\x1a0\x18\x06\x03U\x1d\x18\x04\x11\x18\x0f20230430080028Z03\x02\x14\x1c\xe0w\xf1q\xbd\x91\xb5\xeb\x15\xc6]D\xfb\xff\xb7\xdd\xf4\xa4&quot;\x17\r230430082441Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0603\x02\x14r\xf4M\x16\x0c\xe17\xd7CD\x9d\xe2\x9d\xdd\x99\xb6\xacX\xcew\x17\r230430082451Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x010M\x02\x140R\xed\xa4\xe7\x8c\x8a\x15\xfd\xa6\x8a\xe9\xa6N\x8e\xab\xc3\xd2{m\x17\r230430082505Z0&amp;0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x020\x18\x06\x03U\x1d\x18\x04\x11\x18\x0f20230430080005Z03\x02\x14\x02/\xffi\xb2*\x1f\x1b\x1c\xb0\x1az\xf0((\xfa\xe1\xc8$i\x17\r230430082517Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0303\x02\x14M\xd1\xe3T!\xcf\xec\xa2Y|%y+\x08\xa7\x9f\xd8je#\x17\r230430082530Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0303\x02\x146.\xc6\x19\xbdmj\xe8\x91V\xfa^u\x13\x80\x9e\xb3z\xdf[\x17\r230430082555Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0403\x02\x14q\xac\x84\x15\xf2\x10^\x03\x1bI\xf4\x03\xed\x7f\xe6\xf6\xc5+\x06O\x17\r230430082608Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\x0503\x02\x14\x0c\x1b\xec\r\xea\xbd\xaf\t\x81&quot;N)\x9a\x88&amp;\x0efq\x1ew\x17\r230430082619Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\t03\x02\x14e.\xc0)\xaa3\xd9s\xf8y \xc8(g\xc2\xbe\x84\x88m\x96\x17\r230430082630Z0\x0c0\n\x06\x03U\x1d\x15\x04\x03\n\x01\n\xa0\x1d0\x1b0\n\x06\x03U\x1d\x14\x04\x03\x02\x01\x030\r\x06\x03U\x1d\x1b\x01\x01\xff\x04\x03\x02\x01\x020\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x00\x03\x82\x01\x81\x00\x01\xae\x9c\xa550\xd78\xdf=;\xbf\x92\x17\x86\xbc\xa2\x9a^\x1f|\x00\xa7RKN\x81\xdc2W\xd7!~\x150\xf5\xea\x03\r=x/\xbd\x7fA\x0b\r*W\x82!\xfb\x92\x0c:\xaf3Y\xae/\xb6Q\x9c\x1b\xcbD\xf0w\xcafK\xe7A;\xb0G\xbf\x10\x84\xbf.\x89\x18\xba\x85O\xa6\x9b\xfbu\x11$\xcf\xef\xbaR\x16\x95\x15\xcd \xf1u\x94\x12\x9cga|\xd3\xbf\xa3\xdc2\nOhu\xd3\xccn!t\xe3P\xa3\xf2\r6\xdf\xf6\xdam\xd9\xcd\xa8(\xb8M\x0fR\x9a\x93\xb1\xb2\xdf\xbc\xe7E\&#x27;\x90\xfcDg5b\x93\xa9&amp;\xf4\xa2\x99O\x9e\xa6\x1b\xb8\x13e~\x02\xa6\xd3\xa1\xc6nW\xf3\xf3\xbb\xc5\x0c$8Z\r(\xa8\xbc\xfa\xb2vp2f\xf4\xfaz\xd8s)b\xa3\x16N\xbe\xd3oU091lI&quot;\x8a\x80P\xe6\x80T\x84\xb4\x81\x03G\xee\&#x27;M\xd2\x99\xcb!\xfb\x9e\xfe\x99\xd2/\xee\xcfdZ\xe0\xb897\xd5Z\xb9\x1a\xdc\xd0ZN\x7f\xaa?\x1b\xb4 \xa3\x88?\x17\n{\xd7D\t$\xa7\xf88/E\x88\xb0\xae\x1dI\x8cv\x8e\x95\x82\x946\x93*E$g\xa6\xed{&quot;\xbd\x9a\xdf\x98\xbc\xd8\xe5k\xc68\x8c\xa3\xb1\x8c3\xb9`&lt;\xfc\x1f\xa4\x08\x0epbX\xfdw=\xd1\xfaH\r\xf2.&lt;\xe3\x8b&gt;\x0e\t\xbf\xea\xe4\x00.\x0fh\xa7\x8d&amp;\x8a\x8d&gt;X\x94\xa9\x8b\x03\x1fq\xdb\xd6\xdc\xc9\x81\n\xcc|\xa5n\xb5\x11K\xf2\x13\x81\xf5\xdd\xe9\x16\xfaNW\xc8\xe7;&#x27;
+MIIEdTCCAt0CAQEwDQYJKoZIhvcNAQELBQAwJzEQMA4GA1UECgwHQ29tcGFueTETMBEGA1UEAwwKRXhhbXBsZSBDQRcNMjMwNTAyMDkwMDE1WhcNMzMwNDI5MDkwMDE1WjCCAmEwJQIUQ/l5ww9seKw6t6dZY7Kss2rOOIwXDTIzMDQzMDA4MjQxN1owQQIUA0RT7MDvNuwFUUlfxpspEJz5zl4XDTIzMDQzMDA4MjQyOFowGjAYBgNVHRgEERgPMjAyMzA0MzAwODAwMjhaMDMCFBzgd/FxvZG16xXGXUT7/7fd9KQiFw0yMzA0MzAwODI0NDFaMAwwCgYDVR0VBAMKAQYwMwIUcvRNFgzhN9dDRJ3ind2ZtqxYzncXDTIzMDQzMDA4MjQ1MVowDDAKBgNVHRUEAwoBATBNAhQwUu2k54yKFf2miummTo6rw9J7bRcNMjMwNDMwMDgyNTA1WjAmMAoGA1UdFQQDCgECMBgGA1UdGAQRGA8yMDIzMDQzMDA4MDAwNVowMwIUAi//abIqHxscsBp68Cgo+uHIJGkXDTIzMDQzMDA4MjUxN1owDDAKBgNVHRUEAwoBAzAzAhRN0eNUIc/soll8JXkrCKef2GplIxcNMjMwNDMwMDgyNTMwWjAMMAoGA1UdFQQDCgEDMDMCFDYuxhm9bWrokVb6XnUTgJ6zet9bFw0yMzA0MzAwODI1NTVaMAwwCgYDVR0VBAMKAQQwMwIUcayEFfIQXgMbSfQD7X/m9sUrBk8XDTIzMDQzMDA4MjYwOFowDDAKBgNVHRUEAwoBBTAzAhQMG+wN6r2vCYEiTimaiCYOZnEedxcNMjMwNDMwMDgyNjE5WjAMMAoGA1UdFQQDCgEJMDMCFGUuwCmqM9lz+HkgyChnwr6EiG2WFw0yMzA0MzAwODI2MzBaMAwwCgYDVR0VBAMKAQqgHTAbMAoGA1UdFAQDAgEDMA0GA1UdGwEB/wQDAgECMA0GCSqGSIb3DQEBCwUAA4IBgQABrpylNTDXON89O7+SF4a8oppeH3wAp1JLToHcMlfXIX4VMPXqAw09eC+9f0ELDSpXgiH7kgw6rzNZri+2UZwby0Twd8pmS+dBO7BHvxCEvy6JGLqFT6ab+3URJM/vulIWlRXNIPF1lBKcZ2F807+j3DIKT2h108xuIXTjUKPyDTbf9tpt2c2oKLhND1Kak7Gy37znRSeQ/ERnNWKTqSb0oplPnqYbuBNlfgKm06HGblfz87vFDCQ4Wg0oqLz6snZwMmb0+nrYcylioxZOvtNvVTA5MWxJIoqAUOaAVIS0gQNH7idN0pnLIfue/pnSL+7PZFrguDk31Vq5GtzQWk5/qj8btCCjiD8XCnvXRAkkp/g4L0WIsK4dSYx2jpWClDaTKkUkZ6bteyK9mt+YvNjla8Y4jKOxjDO5YDz8H6QIDnBiWP13PdH6SA3yLjzjiz4OCb/q5AAuD2injSaKjT5YlKmLAx9x29bcyYEKzHylbrURS/ITgfXd6Rb6TlfI5zs=
+-----BEGIN X509 CRL-----
+MIIEdTCCAt0CAQEwDQYJKoZIhvcNAQELBQAwJzEQMA4GA1UECgwHQ29tcGFueTET
+MBEGA1UEAwwKRXhhbXBsZSBDQRcNMjMwNTAyMDkwMDE1WhcNMzMwNDI5MDkwMDE1
+WjCCAmEwJQIUQ/l5ww9seKw6t6dZY7Kss2rOOIwXDTIzMDQzMDA4MjQxN1owQQIU
+A0RT7MDvNuwFUUlfxpspEJz5zl4XDTIzMDQzMDA4MjQyOFowGjAYBgNVHRgEERgP
+MjAyMzA0MzAwODAwMjhaMDMCFBzgd/FxvZG16xXGXUT7/7fd9KQiFw0yMzA0MzAw
+ODI0NDFaMAwwCgYDVR0VBAMKAQYwMwIUcvRNFgzhN9dDRJ3ind2ZtqxYzncXDTIz
+MDQzMDA4MjQ1MVowDDAKBgNVHRUEAwoBATBNAhQwUu2k54yKFf2miummTo6rw9J7
+bRcNMjMwNDMwMDgyNTA1WjAmMAoGA1UdFQQDCgECMBgGA1UdGAQRGA8yMDIzMDQz
+MDA4MDAwNVowMwIUAi//abIqHxscsBp68Cgo+uHIJGkXDTIzMDQzMDA4MjUxN1ow
+DDAKBgNVHRUEAwoBAzAzAhRN0eNUIc/soll8JXkrCKef2GplIxcNMjMwNDMwMDgy
+NTMwWjAMMAoGA1UdFQQDCgEDMDMCFDYuxhm9bWrokVb6XnUTgJ6zet9bFw0yMzA0
+MzAwODI1NTVaMAwwCgYDVR0VBAMKAQQwMwIUcayEFfIQXgMbSfQD7X/m9sUrBk8X
+DTIzMDQzMDA4MjYwOFowDDAKBgNVHRUEAwoBBTAzAhQMG+wN6r2vCYEiTimaiCYO
+ZnEedxcNMjMwNDMwMDgyNjE5WjAMMAoGA1UdFQQDCgEJMDMCFGUuwCmqM9lz+Hkg
+yChnwr6EiG2WFw0yMzA0MzAwODI2MzBaMAwwCgYDVR0VBAMKAQqgHTAbMAoGA1Ud
+FAQDAgEDMA0GA1UdGwEB/wQDAgECMA0GCSqGSIb3DQEBCwUAA4IBgQABrpylNTDX
+ON89O7+SF4a8oppeH3wAp1JLToHcMlfXIX4VMPXqAw09eC+9f0ELDSpXgiH7kgw6
+rzNZri+2UZwby0Twd8pmS+dBO7BHvxCEvy6JGLqFT6ab+3URJM/vulIWlRXNIPF1
+lBKcZ2F807+j3DIKT2h108xuIXTjUKPyDTbf9tpt2c2oKLhND1Kak7Gy37znRSeQ
+/ERnNWKTqSb0oplPnqYbuBNlfgKm06HGblfz87vFDCQ4Wg0oqLz6snZwMmb0+nrY
+cylioxZOvtNvVTA5MWxJIoqAUOaAVIS0gQNH7idN0pnLIfue/pnSL+7PZFrguDk3
+1Vq5GtzQWk5/qj8btCCjiD8XCnvXRAkkp/g4L0WIsK4dSYx2jpWClDaTKkUkZ6bt
+eyK9mt+YvNjla8Y4jKOxjDO5YDz8H6QIDnBiWP13PdH6SA3yLjzjiz4OCb/q5AAu
+D2injSaKjT5YlKmLAx9x29bcyYEKzHylbrURS/ITgfXd6Rb6TlfI5zs=
+-----END X509 CRL-----
+
+Certificate Revocation List (CRL):
+        Version 2 (0x1)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: O = Company, CN = Example CA
+        Last Update: May  2 09:00:15 2023 GMT
+        Next Update: Apr 29 09:00:15 2033 GMT
+        CRL extensions:
+            X509v3 CRL Number: 
+                3
+            X509v3 Delta CRL Indicator: critical
+                2
+Revoked Certificates:
+    Serial Number: 43F979C30F6C78AC3AB7A75963B2ACB36ACE388C
+        Revocation Date: Apr 30 08:24:17 2023 GMT
+    Serial Number: 034453ECC0EF36EC0551495FC69B29109CF9CE5E
+        Revocation Date: Apr 30 08:24:28 2023 GMT
+        CRL entry extensions:
+            Invalidity Date: 
+                Apr 30 08:00:28 2023 GMT
+    Serial Number: 1CE077F171BD91B5EB15C65D44FBFFB7DDF4A422
+        Revocation Date: Apr 30 08:24:41 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Certificate Hold
+    Serial Number: 72F44D160CE137D743449DE29DDD99B6AC58CE77
+        Revocation Date: Apr 30 08:24:51 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Key Compromise
+    Serial Number: 3052EDA4E78C8A15FDA68AE9A64E8EABC3D27B6D
+        Revocation Date: Apr 30 08:25:05 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                CA Compromise
+            Invalidity Date: 
+                Apr 30 08:00:05 2023 GMT
+    Serial Number: 022FFF69B22A1F1B1CB01A7AF02828FAE1C82469
+        Revocation Date: Apr 30 08:25:17 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Affiliation Changed
+    Serial Number: 4DD1E35421CFECA2597C25792B08A79FD86A6523
+        Revocation Date: Apr 30 08:25:30 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Affiliation Changed
+    Serial Number: 362EC619BD6D6AE89156FA5E7513809EB37ADF5B
+        Revocation Date: Apr 30 08:25:55 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Superseded
+    Serial Number: 71AC8415F2105E031B49F403ED7FE6F6C52B064F
+        Revocation Date: Apr 30 08:26:08 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Cessation Of Operation
+    Serial Number: 0C1BEC0DEABDAF0981224E299A88260E66711E77
+        Revocation Date: Apr 30 08:26:19 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                Privilege Withdrawn
+    Serial Number: 652EC029AA33D973F87920C82867C2BE84886D96
+        Revocation Date: Apr 30 08:26:30 2023 GMT
+        CRL entry extensions:
+            X509v3 CRL Reason Code: 
+                AA Compromise
+    Signature Algorithm: sha256WithRSAEncryption
+         01:ae:9c:a5:35:30:d7:38:df:3d:3b:bf:92:17:86:bc:a2:9a:
+         5e:1f:7c:00:a7:52:4b:4e:81:dc:32:57:d7:21:7e:15:30:f5:
+         ea:03:0d:3d:78:2f:bd:7f:41:0b:0d:2a:57:82:21:fb:92:0c:
+         3a:af:33:59:ae:2f:b6:51:9c:1b:cb:44:f0:77:ca:66:4b:e7:
+         41:3b:b0:47:bf:10:84:bf:2e:89:18:ba:85:4f:a6:9b:fb:75:
+         11:24:cf:ef:ba:52:16:95:15:cd:20:f1:75:94:12:9c:67:61:
+         7c:d3:bf:a3:dc:32:0a:4f:68:75:d3:cc:6e:21:74:e3:50:a3:
+         f2:0d:36:df:f6:da:6d:d9:cd:a8:28:b8:4d:0f:52:9a:93:b1:
+         b2:df:bc:e7:45:27:90:fc:44:67:35:62:93:a9:26:f4:a2:99:
+         4f:9e:a6:1b:b8:13:65:7e:02:a6:d3:a1:c6:6e:57:f3:f3:bb:
+         c5:0c:24:38:5a:0d:28:a8:bc:fa:b2:76:70:32:66:f4:fa:7a:
+         d8:73:29:62:a3:16:4e:be:d3:6f:55:30:39:31:6c:49:22:8a:
+         80:50:e6:80:54:84:b4:81:03:47:ee:27:4d:d2:99:cb:21:fb:
+         9e:fe:99:d2:2f:ee:cf:64:5a:e0:b8:39:37:d5:5a:b9:1a:dc:
+         d0:5a:4e:7f:aa:3f:1b:b4:20:a3:88:3f:17:0a:7b:d7:44:09:
+         24:a7:f8:38:2f:45:88:b0:ae:1d:49:8c:76:8e:95:82:94:36:
+         93:2a:45:24:67:a6:ed:7b:22:bd:9a:df:98:bc:d8:e5:6b:c6:
+         38:8c:a3:b1:8c:33:b9:60:3c:fc:1f:a4:08:0e:70:62:58:fd:
+         77:3d:d1:fa:48:0d:f2:2e:3c:e3:8b:3e:0e:09:bf:ea:e4:00:
+         2e:0f:68:a7:8d:26:8a:8d:3e:58:94:a9:8b:03:1f:71:db:d6:
+         dc:c9:81:0a:cc:7c:a5:6e:b5:11:4b:f2:13:81:f5:dd:e9:16:
+         fa:4e:57:c8:e7:3b
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_load_rsa_der_file</td>
+          <td class="col-duration">0.28</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_load_rsa_pem_file</td>
+          <td class="col-duration">0.16</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_load_rsa_base64_string</td>
+          <td class="col-duration">0.16</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_load_ecdsa_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_load_ecdsa_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_rsa_key_type</td>
+          <td class="col-duration">0.16</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_rsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_rsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_ecdsa_key_type</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_ecdsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_ecdsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_save_rsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_save_ecdsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_dump_rsa</td>
+          <td class="col-duration">0.02</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x06\xe3\x02\x01\x00\x02\x82\x01\x81\x00\xb5\xd9-\x8f\xbe%\x04\x8d=\xe9F\xa6-\xac\x82\xef\x9e\x88\\\xf3dNH\x02\xb4o\x15\xc6\xdb;\xb1\xd1JmaI\xc4w_r\x83\x02\xb4L\x03CC.\x97\xbf\xc44m\xb8\xda\xca\xcex\xe9@\x96\xa4\xfd\xa0\xd0\x1cP\x89%6.\x92\x83\xd2g\x94\\`\xb0G\xbf\xb7\x9e\xac\x10S5\x0f\x8e*]\xc8\x81C&amp;\xed\xe22R\xb5M\x91\x12u?,\xc0\xee\x0f\xe6\x93\x97\x13\\\xb48N(\xcdBox\xe9nX\&#x27;\xd1dj;\xab\xd5\x15\xc6me\xa4\x05\x9f\x14r?\xe4\xdd\x87\xfe\xf1\x0eg\xfc\xf9\x89O\xe3\xdb2\xa7h\xc5\xe7f\x84&amp;*9:K4\xe5\xf4\xa6\&#x27;&amp;-\xa3\xb9-&amp;!q\x96\xc1\xf9-F\xc4 \x82c\x1a\xff(\x90V\xbc&quot;\x90\xe5\x8bTPX\xb0\x88*jg\x18w}0\x84\xd7+\x92\xd6R\xad\x12\xa6_F\x97\xc8$F\xd9\&#x27;\x16\xcb\xf8;4m\xd6nF\x00|\x18\xb9\x17C\xe1\xf9\xc3s/\x0b\xca\xe0q\x01\xbd\x9fY$\xab\xccST\&#x27;\xd6&gt;,H\xde\xc84\r)\x9f\xd7\xc7\xac(:\xd7YR\xe2\xe5\x99\x13f\xb8\x12F(\x8b\x1a\x81/E\xb3a&gt;\xbe\xf8\xad\x1c\xb7\xb8\xed\x84w?q\x91\x9e\xda\x86\x7f\xbf=\xf0\x06\xb4\xfb\xdfe\xe0TO\xbe[F\xb9\xa8q\xbb\xac\x8e0&lt;\xc9\xad*f\x1e\x1f/]\xc1\xc1\x17\xfb\xe7\xe8\x02\xe5\x87\xc2+\x1f\x02\x84k\xc2\xb0V\x90&amp;\xa7\xac\xd0\xb4\xb9\xc9\xa8\xbc\x19\xdb\x8e\x0b\t&amp;&lt;\xdd\xb6\x96{+\x83\x02\x03\x01\x00\x01\x02\x82\x01\x80\x01\xc7S\x03\xc1\xe7X\xc9\x0c\xde\xf8:\xed\xddo\x16j\xe5\x88\x8b4\xe2\xf3\x1f[\xa6n\x7f\x18k\xd8\x0cd\xfe\xf6\xe1\xa2\xd3L\x12\xb1\xa7X\x1e\x1a6\x115&amp;t\xd0\xb5v\x91EJ\x90\x84l;\x9e}\x94\xa1{\x07\x9b\xde\x0b\x88!&quot;{\xb9\x96\x1b\xc4_\x89\xb9\xd9\xed0\xd7\x1b\xfd\xc4Z\x17\x98\xe0{\xf2\x8f\xb6\x94\xc3\x0e\x9c\xf2{\x04\xbd:zX\xb4\xb6__p\xf8\x1cO^\xcf\xe2+\xd1\xfe!Z\xfce\x80\xe5:\xce\x11\x9f\xed\xc9R\xc23\x15\xb8i\xf9\xa9X\x88\xb9sU&gt;0\x1bd\xf6\xfbu\xd5[4,\xa5\xa8\x87\xaf\x00\xb8\xb0*\xdf\x8ekg\xe4\x0b\xe5\x88&quot;~u\xc8|\xe1\x8f\x98-\xd2M\xde\x9c\x7f\x94\x95\xd1\xe4T\xb4\x8b\x9f\x07\xcb\xea\xf8j\xac\x86\x01\xc1\x18\xc9\x98\x89&gt;\xd9WY,\x87\x07\xd2\x15\xe4\x0e\xb5\x14\xe2\xd6\xef\x06\x169\x93&lt;\xd6\x0b\\\xae+\x07D(\xd6\x0e\xe0v\x04tY\x0bH\xe3\xe4\xa16}_\xed0\xd4cL$\x1cNN\xeay\xd6\xcd\x93\xaa\xf4\x85G\xac\xf0\x1f\x17\x7f-\xe1\x0cV\x02\x92vc\xa1\xc0q\xb3[ \x9f\x88\xad\xb7\x16~cI.{8\xd2/C\xf7\x1cMM\xf9\xc53\x94%\xb5J\xc0K=_j\xe0\x8b\x10\xeb%D&gt;\xf46A\x0ec\xb61P&amp;\x08\xab\x19N\x04T\xf7\x1a\x13\xdeL7;\xdf\x00\x18\xf68^\r\x96\x14\x8csR?\xcar\xfc\xff\x0b\xfb\x95\xca\xeb\xdf\xe7\xf7\xc9\xda\x05\x91A\x80%\x1d\x8eD\xd3\xa1\x02\x81\xc1\x00\xeeNP\xe3\xe6\xd5$\x17h\xc0\xf7.&lt;1}\xecKlX%\x8a\x0c&quot;C\x9a\xa6\xf8ZZD\xe7A\xafR\x92\x98\x01\x8d\xf0\\:\x83\xd8x\x1c\x1b^\x7f\x06\x01\xf3\xb4\xf8\xb8\x1e\xf8\xa3\xff\xa2&quot;\xd6\x0ca\x8c\xf4\xe0\xff\xd1-\xc5 -0\x18\xd6!+\xbd\xab\x1a\x8c\xfa\xe7\x1b\x01\x10\xcd@f\x98\x89\xffI\x07\xdd=T\x18Z\xa8!\xd3X\x93\xa7\xd0\xd38\x81\xd0\xaepN%\xb9%\xfaY\x7fM\x81\xc9\x99\x90\xa9\x98\x87\x1cn2\xe7&gt;!?\x05\x96?\xddGb\xa2\xee\xf3x\xc1\x07\xdf\xe3\x1dy\xd6uxc5\xef\xa09\x93\r|`v2F\xdf~WA\x7fy\xb7\xe7\x8eoh#u\n\x1f\xa28\xa1a\x08\x8c\x00,\xfe\xf8\x94\x93\x02\x81\xc1\x00\xc3Y\xb9\x8b\t\xc7\xdb\xe1,\xf9!_&gt;\xc4[=\x82\xa6\xce\t\xc0\xcd\x85t\xb5c\x80L\xd9\x8b\xed\x9f\x1el\xb3\xd2\xdd@#7Z\xc9\xf7\x87\xd9U\xee\x84*\xc0\x0c\x07}-\xdd\xf4u\xef\xd1\xd9@:\x93s\xc2\xfb\xc1&lt;\xbe\xa5K\xaa\x8e\x8b\xd0\xa5[K.\xa23 \xe3P&lt;&amp;\x08\xe3_\xe8\\ \xb7 \xe6]\xa2\x01\xa0c\xf3\xb2W\xc7\xb1 \xbf\r\x88\x12l:\xbf\xfe\x06l\x99\x87#\x88\xaf\x0ch\xff\xa6\x7f\x1e\x1e\xa3\xb9UYi\xce\xb1A\x81\x08\xd6\xec\xbad\x81,\xfdC\x04\xd6\xfdL\x81(N|\x06\xf9}\xb7\x9fl\xfb\xec\xf3\xd7\x9d\xd9wl_o\xf2\xd0:lK\x81\xb5\x0c8J+\xd4\xa5s\xc5D\xc9\xb0-\x85\xd3Q\x02\x81\xc0M\xb9OZ\xb5\x8b\xe8\xe4\x95\xae\xf2/\xabD=\x1c\xd7\x90\xb3\xc32\x9e8\x82\xb2+)/V\xe7\xc8A=,\x82Q\x7f\x98J\xbf\xd9\xf9\xec\x9dh\x15i!\xa6\xd4\xf6&amp;\x9dDx\x1d\x82g\xba\xfa\xff\xb34\x11\xe4@\x8aO0Mm\xec/\x16\xba\xa8@\xfa\xf0\x96\x8dJ\xbc\x1b\xab\xa2N?e\xf6\xf4sE\xdf\x81\xc2!\xee{\x8b\x00\xd5L\xbb\x83\xedq&amp;\xa9\xf8e\x1c\x8d\xf0q\xcd\xb84~w\xca\x0f\xf5\xbd \x03vu\xc8_c\xdax\xbftT\x07\xeae\x00\xff\xc1M\xb9\xa1\xc3\xae\xbb\x05\x7f\x1az_\xd4\x83\xdf\xee\xf38J\x1a\xb9\xdfs\x10x\x8e]i(i\x8b\x98\xc3u\x04\x93#\xf64Q\x15\x85T\xff\x93\xa1\xef\x0b\x0e\no\x02\x81\xc1\x00\xa2\xd7\x9d\xa2\xb8q\x80\xeaQ\x1a\x0f\xe6\x9c\xa5\x04E\xdf.{\\\x87\xfb\n\xbf\xc2!\x02\xa7\x8dEf\xbc\x98\x99\x16\xc1\xb5+\xac\xef\x8c\xe0\x05V\x9a&amp;V\xe0\x97\xdeeh\xac\xc1\xda^\xd9\x1d#\xfa\x0c\xdf\x87a\x1dm\xcd\xa4|k\xc0\n\x9a/\x14\xabr\xd1\xd6:\xe1\x92\r\xcb)\x88\xaf*\x13\x1d\xd8\x06q\x81\x9cf\xfb\x10\x8e\n#\xf0K\xda+\xdeWD\xc9dJ\x12#Ow=z1\xbb\xbeI\xe5wu|\xeeDFXF\xbbN\x00\xb4\x8a\xf0F\xc6\xfe\x9aq\xba,0;\xa2m[e\xe5+YU+p\x88\xf3ri\x14ia\x19\xd7h?\n\x9d-e]\xac\x94\xb7\x07\xaeE$\xbd\x9b\x9e\xb3\xf1\x83\xf32\xa7J\x14x\x951\x02\x81\xc0*\x19F\x90!\xa0\x11\x91\xd9\x15\xa5u\xc3\xec_\x0b\x88B\xc8\x88YS,\xfcY\xf7\xb4\x12\x13!\xee?+\x1d\x8b\xb7\xb1\xbc\x98\xef\xfb0\x9a\x11\x9b\x83(&lt;\x1bm\xed\xc2vx\x0f\x9d\x9f\xee\x94\xee\xf9DZ/\xa8\x85+\xcf\xec\xb0\xfe\xac*/\xe3\xa9\xaf1\xf3\x9f\r\xdf\x94\xe7\xfb\x04\x94\xd8z%\x18\xed\x93#\xdfB\x9c\xf3\xae7\x7f\xc7\x98\xb8\xd23\xebY\xae\xfc -\x17g\xcaD\xad{\xe9\xfca\x0e\x1c\x01\xfc\xacn\xaee\x87.\x0fmaH\xab`G\xf3\x0c\xee$\xe9\xe1\xa7\x88\xbb\x9f\xa42\x8b\xee\xee-V?\xd4,\xa11\xf13\xde\xaa\x9f\x14\xdb\x92\xcf\x08\x9a\x86\xf6\x85\xf9| s\x99\xbc\xcb\xda\xbc\xf4S\x81\xb3\xe1\xb3\x8c\x14\xa7&#x27; 
+
+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 
+
+-----BEGIN RSA PRIVATE KEY-----
+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
+-----END RSA PRIVATE KEY-----
+ 
+
+RSA Private-Key: (3072 bit, 2 primes)
+modulus:
+    00:b5:d9:2d:8f:be:25:04:8d:3d:e9:46:a6:2d:ac:
+    82:ef:9e:88:5c:f3:64:4e:48:02:b4:6f:15:c6:db:
+    3b:b1:d1:4a:6d:61:49:c4:77:5f:72:83:02:b4:4c:
+    03:43:43:2e:97:bf:c4:34:6d:b8:da:ca:ce:78:e9:
+    40:96:a4:fd:a0:d0:1c:50:89:25:36:2e:92:83:d2:
+    67:94:5c:60:b0:47:bf:b7:9e:ac:10:53:35:0f:8e:
+    2a:5d:c8:81:43:26:ed:e2:32:52:b5:4d:91:12:75:
+    3f:2c:c0:ee:0f:e6:93:97:13:5c:b4:38:4e:28:cd:
+    42:6f:78:e9:6e:58:27:d1:64:6a:3b:ab:d5:15:c6:
+    6d:65:a4:05:9f:14:72:3f:e4:dd:87:fe:f1:0e:67:
+    fc:f9:89:4f:e3:db:32:a7:68:c5:e7:66:84:26:2a:
+    39:3a:4b:34:e5:f4:a6:27:26:2d:a3:b9:2d:26:21:
+    71:96:c1:f9:2d:46:c4:20:82:63:1a:ff:28:90:56:
+    bc:22:90:e5:8b:54:50:58:b0:88:2a:6a:67:18:77:
+    7d:30:84:d7:2b:92:d6:52:ad:12:a6:5f:46:97:c8:
+    24:46:d9:27:16:cb:f8:3b:34:6d:d6:6e:46:00:7c:
+    18:b9:17:43:e1:f9:c3:73:2f:0b:ca:e0:71:01:bd:
+    9f:59:24:ab:cc:53:54:27:d6:3e:2c:48:de:c8:34:
+    0d:29:9f:d7:c7:ac:28:3a:d7:59:52:e2:e5:99:13:
+    66:b8:12:46:28:8b:1a:81:2f:45:b3:61:3e:be:f8:
+    ad:1c:b7:b8:ed:84:77:3f:71:91:9e:da:86:7f:bf:
+    3d:f0:06:b4:fb:df:65:e0:54:4f:be:5b:46:b9:a8:
+    71:bb:ac:8e:30:3c:c9:ad:2a:66:1e:1f:2f:5d:c1:
+    c1:17:fb:e7:e8:02:e5:87:c2:2b:1f:02:84:6b:c2:
+    b0:56:90:26:a7:ac:d0:b4:b9:c9:a8:bc:19:db:8e:
+    0b:09:26:3c:dd:b6:96:7b:2b:83
+publicExponent: 65537 (0x10001)
+privateExponent:
+    01:c7:53:03:c1:e7:58:c9:0c:de:f8:3a:ed:dd:6f:
+    16:6a:e5:88:8b:34:e2:f3:1f:5b:a6:6e:7f:18:6b:
+    d8:0c:64:fe:f6:e1:a2:d3:4c:12:b1:a7:58:1e:1a:
+    36:11:35:26:74:d0:b5:76:91:45:4a:90:84:6c:3b:
+    9e:7d:94:a1:7b:07:9b:de:0b:88:21:22:7b:b9:96:
+    1b:c4:5f:89:b9:d9:ed:30:d7:1b:fd:c4:5a:17:98:
+    e0:7b:f2:8f:b6:94:c3:0e:9c:f2:7b:04:bd:3a:7a:
+    58:b4:b6:5f:5f:70:f8:1c:4f:5e:cf:e2:2b:d1:fe:
+    21:5a:fc:65:80:e5:3a:ce:11:9f:ed:c9:52:c2:33:
+    15:b8:69:f9:a9:58:88:b9:73:55:3e:30:1b:64:f6:
+    fb:75:d5:5b:34:2c:a5:a8:87:af:00:b8:b0:2a:df:
+    8e:6b:67:e4:0b:e5:88:22:7e:75:c8:7c:e1:8f:98:
+    2d:d2:4d:de:9c:7f:94:95:d1:e4:54:b4:8b:9f:07:
+    cb:ea:f8:6a:ac:86:01:c1:18:c9:98:89:3e:d9:57:
+    59:2c:87:07:d2:15:e4:0e:b5:14:e2:d6:ef:06:16:
+    39:93:3c:d6:0b:5c:ae:2b:07:44:28:d6:0e:e0:76:
+    04:74:59:0b:48:e3:e4:a1:36:7d:5f:ed:30:d4:63:
+    4c:24:1c:4e:4e:ea:79:d6:cd:93:aa:f4:85:47:ac:
+    f0:1f:17:7f:2d:e1:0c:56:02:92:76:63:a1:c0:71:
+    b3:5b:20:9f:88:ad:b7:16:7e:63:49:2e:7b:38:d2:
+    2f:43:f7:1c:4d:4d:f9:c5:33:94:25:b5:4a:c0:4b:
+    3d:5f:6a:e0:8b:10:eb:25:44:3e:f4:36:41:0e:63:
+    b6:31:50:26:08:ab:19:4e:04:54:f7:1a:13:de:4c:
+    37:3b:df:00:18:f6:38:5e:0d:96:14:8c:73:52:3f:
+    ca:72:fc:ff:0b:fb:95:ca:eb:df:e7:f7:c9:da:05:
+    91:41:80:25:1d:8e:44:d3:a1
+prime1:
+    00:ee:4e:50:e3:e6:d5:24:17:68:c0:f7:2e:3c:31:
+    7d:ec:4b:6c:58:25:8a:0c:22:43:9a:a6:f8:5a:5a:
+    44:e7:41:af:52:92:98:01:8d:f0:5c:3a:83:d8:78:
+    1c:1b:5e:7f:06:01:f3:b4:f8:b8:1e:f8:a3:ff:a2:
+    22:d6:0c:61:8c:f4:e0:ff:d1:2d:c5:20:2d:30:18:
+    d6:21:2b:bd:ab:1a:8c:fa:e7:1b:01:10:cd:40:66:
+    98:89:ff:49:07:dd:3d:54:18:5a:a8:21:d3:58:93:
+    a7:d0:d3:38:81:d0:ae:70:4e:25:b9:25:fa:59:7f:
+    4d:81:c9:99:90:a9:98:87:1c:6e:32:e7:3e:21:3f:
+    05:96:3f:dd:47:62:a2:ee:f3:78:c1:07:df:e3:1d:
+    79:d6:75:78:63:35:ef:a0:39:93:0d:7c:60:76:32:
+    46:df:7e:57:41:7f:79:b7:e7:8e:6f:68:23:75:0a:
+    1f:a2:38:a1:61:08:8c:00:2c:fe:f8:94:93
+prime2:
+    00:c3:59:b9:8b:09:c7:db:e1:2c:f9:21:5f:3e:c4:
+    5b:3d:82:a6:ce:09:c0:cd:85:74:b5:63:80:4c:d9:
+    8b:ed:9f:1e:6c:b3:d2:dd:40:23:37:5a:c9:f7:87:
+    d9:55:ee:84:2a:c0:0c:07:7d:2d:dd:f4:75:ef:d1:
+    d9:40:3a:93:73:c2:fb:c1:3c:be:a5:4b:aa:8e:8b:
+    d0:a5:5b:4b:2e:a2:33:20:e3:50:3c:26:08:e3:5f:
+    e8:5c:20:b7:20:e6:5d:a2:01:a0:63:f3:b2:57:c7:
+    b1:20:bf:0d:88:12:6c:3a:bf:fe:06:6c:99:87:23:
+    88:af:0c:68:ff:a6:7f:1e:1e:a3:b9:55:59:69:ce:
+    b1:41:81:08:d6:ec:ba:64:81:2c:fd:43:04:d6:fd:
+    4c:81:28:4e:7c:06:f9:7d:b7:9f:6c:fb:ec:f3:d7:
+    9d:d9:77:6c:5f:6f:f2:d0:3a:6c:4b:81:b5:0c:38:
+    4a:2b:d4:a5:73:c5:44:c9:b0:2d:85:d3:51
+exponent1:
+    4d:b9:4f:5a:b5:8b:e8:e4:95:ae:f2:2f:ab:44:3d:
+    1c:d7:90:b3:c3:32:9e:38:82:b2:2b:29:2f:56:e7:
+    c8:41:3d:2c:82:51:7f:98:4a:bf:d9:f9:ec:9d:68:
+    15:69:21:a6:d4:f6:26:9d:44:78:1d:82:67:ba:fa:
+    ff:b3:34:11:e4:40:8a:4f:30:4d:6d:ec:2f:16:ba:
+    a8:40:fa:f0:96:8d:4a:bc:1b:ab:a2:4e:3f:65:f6:
+    f4:73:45:df:81:c2:21:ee:7b:8b:00:d5:4c:bb:83:
+    ed:71:26:a9:f8:65:1c:8d:f0:71:cd:b8:34:7e:77:
+    ca:0f:f5:bd:20:03:76:75:c8:5f:63:da:78:bf:74:
+    54:07:ea:65:00:ff:c1:4d:b9:a1:c3:ae:bb:05:7f:
+    1a:7a:5f:d4:83:df:ee:f3:38:4a:1a:b9:df:73:10:
+    78:8e:5d:69:28:69:8b:98:c3:75:04:93:23:f6:34:
+    51:15:85:54:ff:93:a1:ef:0b:0e:0a:6f
+exponent2:
+    00:a2:d7:9d:a2:b8:71:80:ea:51:1a:0f:e6:9c:a5:
+    04:45:df:2e:7b:5c:87:fb:0a:bf:c2:21:02:a7:8d:
+    45:66:bc:98:99:16:c1:b5:2b:ac:ef:8c:e0:05:56:
+    9a:26:56:e0:97:de:65:68:ac:c1:da:5e:d9:1d:23:
+    fa:0c:df:87:61:1d:6d:cd:a4:7c:6b:c0:0a:9a:2f:
+    14:ab:72:d1:d6:3a:e1:92:0d:cb:29:88:af:2a:13:
+    1d:d8:06:71:81:9c:66:fb:10:8e:0a:23:f0:4b:da:
+    2b:de:57:44:c9:64:4a:12:23:4f:77:3d:7a:31:bb:
+    be:49:e5:77:75:7c:ee:44:46:58:46:bb:4e:00:b4:
+    8a:f0:46:c6:fe:9a:71:ba:2c:30:3b:a2:6d:5b:65:
+    e5:2b:59:55:2b:70:88:f3:72:69:14:69:61:19:d7:
+    68:3f:0a:9d:2d:65:5d:ac:94:b7:07:ae:45:24:bd:
+    9b:9e:b3:f1:83:f3:32:a7:4a:14:78:95:31
+coefficient:
+    2a:19:46:90:21:a0:11:91:d9:15:a5:75:c3:ec:5f:
+    0b:88:42:c8:88:59:53:2c:fc:59:f7:b4:12:13:21:
+    ee:3f:2b:1d:8b:b7:b1:bc:98:ef:fb:30:9a:11:9b:
+    83:28:3c:1b:6d:ed:c2:76:78:0f:9d:9f:ee:94:ee:
+    f9:44:5a:2f:a8:85:2b:cf:ec:b0:fe:ac:2a:2f:e3:
+    a9:af:31:f3:9f:0d:df:94:e7:fb:04:94:d8:7a:25:
+    18:ed:93:23:df:42:9c:f3:ae:37:7f:c7:98:b8:d2:
+    33:eb:59:ae:fc:20:2d:17:67:ca:44:ad:7b:e9:fc:
+    61:0e:1c:01:fc:ac:6e:ae:65:87:2e:0f:6d:61:48:
+    ab:60:47:f3:0c:ee:24:e9:e1:a7:88:bb:9f:a4:32:
+    8b:ee:ee:2d:56:3f:d4:2c:a1:31:f1:33:de:aa:9f:
+    14:db:92:cf:08:9a:86:f6:85:f9:7c:20:73:99:bc:
+    cb:da:bc:f4:53:81:b3:e1:b3:8c:14:a7
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_priv_test.py::test_dump_ecdsa</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0w\x02\x01\x01\x04 \xe9\xf2\xe3\xe1F\x17\x0e\xe7@w\xact\x9b\xf34\x0f1\xf3`\xca\x00+1K*\x99\x9efo\xbf.\xc6\xa0\n\x06\x08*\x86H\xce=\x03\x01\x07\xa1D\x03B\x00\x04c&amp;&amp;3\xfd\xad\x88#KVBn\xe6\xd5\x82\xbd\xaa\xb8_x@K\xac&amp;\xc1\xef\xda\xfb\x83J\xb3\xf3W\x030Z\xf9b\xa2\x01\x88A\xc2&gt;\xd5e\xe8n\xe4\xe0\xb1]X2&gt;\xe1\x10+\xdb\x92A3\x9e\xe3&#x27; 
+
+MHcCAQEEIOny4+FGFw7nQHesdJvzNA8x82DKACsxSyqZnmZvvy7GoAoGCCqGSM49AwEHoUQDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe4w== 
+
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIOny4+FGFw7nQHesdJvzNA8x82DKACsxSyqZnmZvvy7GoAoGCCqGSM49
+AwEHoUQDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a+4NKs/NXAzBa+WKi
+AYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe4w==
+-----END EC PRIVATE KEY-----
+ 
+
+Private-Key: (256 bit)
+priv:
+    e9:f2:e3:e1:46:17:0e:e7:40:77:ac:74:9b:f3:34:
+    0f:31:f3:60:ca:00:2b:31:4b:2a:99:9e:66:6f:bf:
+    2e:c6
+pub:
+    04:63:26:26:33:fd:ad:88:23:4b:56:42:6e:e6:d5:
+    82:bd:aa:b8:5f:78:40:4b:ac:26:c1:ef:da:fb:83:
+    4a:b3:f3:57:03:30:5a:f9:62:a2:01:88:41:c2:3e:
+    d5:65:e8:6e:e4:e0:b1:5d:58:32:3e:e1:10:2b:db:
+    92:41:33:9e:e3
+ASN1 OID: prime256v1
+NIST CURVE: P-256
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_load_rsa_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_load_rsa_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_load_rsa_base64_string</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_load_ecdsa_der_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_load_ecdsa_pem_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_load_ecdsa_base64_string</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_rsa_key_type</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_rsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_rsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_ecdsa_key_type</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_ecdsa_key_size</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_ecdsa_key_curve</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_save_rsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_save_ecdsa</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_dump_rsa</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x01\xa20\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01\x05\x00\x03\x82\x01\x8f\x000\x82\x01\x8a\x02\x82\x01\x81\x00\xb5\xd9-\x8f\xbe%\x04\x8d=\xe9F\xa6-\xac\x82\xef\x9e\x88\\\xf3dNH\x02\xb4o\x15\xc6\xdb;\xb1\xd1JmaI\xc4w_r\x83\x02\xb4L\x03CC.\x97\xbf\xc44m\xb8\xda\xca\xcex\xe9@\x96\xa4\xfd\xa0\xd0\x1cP\x89%6.\x92\x83\xd2g\x94\\`\xb0G\xbf\xb7\x9e\xac\x10S5\x0f\x8e*]\xc8\x81C&amp;\xed\xe22R\xb5M\x91\x12u?,\xc0\xee\x0f\xe6\x93\x97\x13\\\xb48N(\xcdBox\xe9nX\&#x27;\xd1dj;\xab\xd5\x15\xc6me\xa4\x05\x9f\x14r?\xe4\xdd\x87\xfe\xf1\x0eg\xfc\xf9\x89O\xe3\xdb2\xa7h\xc5\xe7f\x84&amp;*9:K4\xe5\xf4\xa6\&#x27;&amp;-\xa3\xb9-&amp;!q\x96\xc1\xf9-F\xc4 \x82c\x1a\xff(\x90V\xbc&quot;\x90\xe5\x8bTPX\xb0\x88*jg\x18w}0\x84\xd7+\x92\xd6R\xad\x12\xa6_F\x97\xc8$F\xd9\&#x27;\x16\xcb\xf8;4m\xd6nF\x00|\x18\xb9\x17C\xe1\xf9\xc3s/\x0b\xca\xe0q\x01\xbd\x9fY$\xab\xccST\&#x27;\xd6&gt;,H\xde\xc84\r)\x9f\xd7\xc7\xac(:\xd7YR\xe2\xe5\x99\x13f\xb8\x12F(\x8b\x1a\x81/E\xb3a&gt;\xbe\xf8\xad\x1c\xb7\xb8\xed\x84w?q\x91\x9e\xda\x86\x7f\xbf=\xf0\x06\xb4\xfb\xdfe\xe0TO\xbe[F\xb9\xa8q\xbb\xac\x8e0&lt;\xc9\xad*f\x1e\x1f/]\xc1\xc1\x17\xfb\xe7\xe8\x02\xe5\x87\xc2+\x1f\x02\x84k\xc2\xb0V\x90&amp;\xa7\xac\xd0\xb4\xb9\xc9\xa8\xbc\x19\xdb\x8e\x0b\t&amp;&lt;\xdd\xb6\x96{+\x83\x02\x03\x01\x00\x01&#x27; 
+
+MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAtdktj74lBI096UamLayC756IXPNkTkgCtG8Vxts7sdFKbWFJxHdfcoMCtEwDQ0Mul7/ENG242srOeOlAlqT9oNAcUIklNi6Sg9JnlFxgsEe/t56sEFM1D44qXciBQybt4jJStU2REnU/LMDuD+aTlxNctDhOKM1Cb3jpblgn0WRqO6vVFcZtZaQFnxRyP+Tdh/7xDmf8+YlP49syp2jF52aEJio5Oks05fSmJyYto7ktJiFxlsH5LUbEIIJjGv8okFa8IpDli1RQWLCIKmpnGHd9MITXK5LWUq0Spl9Gl8gkRtknFsv4OzRt1m5GAHwYuRdD4fnDcy8LyuBxAb2fWSSrzFNUJ9Y+LEjeyDQNKZ/Xx6woOtdZUuLlmRNmuBJGKIsagS9Fs2E+vvitHLe47YR3P3GRntqGf7898Aa0+99l4FRPvltGuahxu6yOMDzJrSpmHh8vXcHBF/vn6ALlh8IrHwKEa8KwVpAmp6zQtLnJqLwZ244LCSY83baWeyuDAgMBAAE= 
+
+-----BEGIN PUBLIC KEY-----
+MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAtdktj74lBI096UamLayC
+756IXPNkTkgCtG8Vxts7sdFKbWFJxHdfcoMCtEwDQ0Mul7/ENG242srOeOlAlqT9
+oNAcUIklNi6Sg9JnlFxgsEe/t56sEFM1D44qXciBQybt4jJStU2REnU/LMDuD+aT
+lxNctDhOKM1Cb3jpblgn0WRqO6vVFcZtZaQFnxRyP+Tdh/7xDmf8+YlP49syp2jF
+52aEJio5Oks05fSmJyYto7ktJiFxlsH5LUbEIIJjGv8okFa8IpDli1RQWLCIKmpn
+GHd9MITXK5LWUq0Spl9Gl8gkRtknFsv4OzRt1m5GAHwYuRdD4fnDcy8LyuBxAb2f
+WSSrzFNUJ9Y+LEjeyDQNKZ/Xx6woOtdZUuLlmRNmuBJGKIsagS9Fs2E+vvitHLe4
+7YR3P3GRntqGf7898Aa0+99l4FRPvltGuahxu6yOMDzJrSpmHh8vXcHBF/vn6ALl
+h8IrHwKEa8KwVpAmp6zQtLnJqLwZ244LCSY83baWeyuDAgMBAAE=
+-----END PUBLIC KEY-----
+ 
+
+RSA Public-Key: (3072 bit)
+Modulus:
+    00:b5:d9:2d:8f:be:25:04:8d:3d:e9:46:a6:2d:ac:
+    82:ef:9e:88:5c:f3:64:4e:48:02:b4:6f:15:c6:db:
+    3b:b1:d1:4a:6d:61:49:c4:77:5f:72:83:02:b4:4c:
+    03:43:43:2e:97:bf:c4:34:6d:b8:da:ca:ce:78:e9:
+    40:96:a4:fd:a0:d0:1c:50:89:25:36:2e:92:83:d2:
+    67:94:5c:60:b0:47:bf:b7:9e:ac:10:53:35:0f:8e:
+    2a:5d:c8:81:43:26:ed:e2:32:52:b5:4d:91:12:75:
+    3f:2c:c0:ee:0f:e6:93:97:13:5c:b4:38:4e:28:cd:
+    42:6f:78:e9:6e:58:27:d1:64:6a:3b:ab:d5:15:c6:
+    6d:65:a4:05:9f:14:72:3f:e4:dd:87:fe:f1:0e:67:
+    fc:f9:89:4f:e3:db:32:a7:68:c5:e7:66:84:26:2a:
+    39:3a:4b:34:e5:f4:a6:27:26:2d:a3:b9:2d:26:21:
+    71:96:c1:f9:2d:46:c4:20:82:63:1a:ff:28:90:56:
+    bc:22:90:e5:8b:54:50:58:b0:88:2a:6a:67:18:77:
+    7d:30:84:d7:2b:92:d6:52:ad:12:a6:5f:46:97:c8:
+    24:46:d9:27:16:cb:f8:3b:34:6d:d6:6e:46:00:7c:
+    18:b9:17:43:e1:f9:c3:73:2f:0b:ca:e0:71:01:bd:
+    9f:59:24:ab:cc:53:54:27:d6:3e:2c:48:de:c8:34:
+    0d:29:9f:d7:c7:ac:28:3a:d7:59:52:e2:e5:99:13:
+    66:b8:12:46:28:8b:1a:81:2f:45:b3:61:3e:be:f8:
+    ad:1c:b7:b8:ed:84:77:3f:71:91:9e:da:86:7f:bf:
+    3d:f0:06:b4:fb:df:65:e0:54:4f:be:5b:46:b9:a8:
+    71:bb:ac:8e:30:3c:c9:ad:2a:66:1e:1f:2f:5d:c1:
+    c1:17:fb:e7:e8:02:e5:87:c2:2b:1f:02:84:6b:c2:
+    b0:56:90:26:a7:ac:d0:b4:b9:c9:a8:bc:19:db:8e:
+    0b:09:26:3c:dd:b6:96:7b:2b:83
+Exponent: 65537 (0x10001)
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/key_pub_test.py::test_dump_ecdsa</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0Y0\x13\x06\x07*\x86H\xce=\x02\x01\x06\x08*\x86H\xce=\x03\x01\x07\x03B\x00\x04c&amp;&amp;3\xfd\xad\x88#KVBn\xe6\xd5\x82\xbd\xaa\xb8_x@K\xac&amp;\xc1\xef\xda\xfb\x83J\xb3\xf3W\x030Z\xf9b\xa2\x01\x88A\xc2&gt;\xd5e\xe8n\xe4\xe0\xb1]X2&gt;\xe1\x10+\xdb\x92A3\x9e\xe3&#x27; 
+
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hAS6wmwe/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe4w== 
+
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYyYmM/2tiCNLVkJu5tWCvaq4X3hA
+S6wmwe/a+4NKs/NXAzBa+WKiAYhBwj7VZehu5OCxXVgyPuEQK9uSQTOe4w==
+-----END PUBLIC KEY-----
+ 
+
+Public-Key: (256 bit)
+pub:
+    04:63:26:26:33:fd:ad:88:23:4b:56:42:6e:e6:d5:
+    82:bd:aa:b8:5f:78:40:4b:ac:26:c1:ef:da:fb:83:
+    4a:b3:f3:57:03:30:5a:f9:62:a2:01:88:41:c2:3e:
+    d5:65:e8:6e:e4:e0:b1:5d:58:32:3e:e1:10:2b:db:
+    92:41:33:9e:e3
+ASN1 OID: prime256v1
+NIST CURVE: P-256
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_load_rsa_file</td>
+          <td class="col-duration">0.17</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_load_ecdsa_file</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_load_rsa_base64</td>
+          <td class="col-duration">0.16</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_load_ecdsa_base64</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_save_rsa</td>
+          <td class="col-duration">0.20</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_save_ecdsa</td>
+          <td class="col-duration">0.03</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_dump_rsa</td>
+          <td class="col-duration">0.02</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x0fC\x02\x01\x030\x82\x0e\xf9\x06\t*\x86H\x86\xf7\r\x01\x07\x01\xa0\x82\x0e\xea\x04\x82\x0e\xe60\x82\x0e\xe20\x82\x07\x86\x06\t*\x86H\x86\xf7\r\x01\x07\x01\xa0\x82\x07w\x04\x82\x07s0\x82\x07o0\x82\x07k\x06\x0b*\x86H\x86\xf7\r\x01\x0c\n\x01\x03\xa0\x82\x0730\x82\x07/\x06\n*\x86H\x86\xf7\r\x01\t\x16\x01\xa0\x82\x07\x1f\x04\x82\x07\x1b0\x82\x07\x170\x82\x05\x7f\xa0\x03\x02\x01\x02\x02\x14\x11u\x0f\x89|?U\xf56vp#\xad\x05\x86\xe4\x04\xa2\xb8x0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x000\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA0\x1e\x17\r230430102958Z\x17\r330428142039Z0=1\x0b0\t\x06\x03U\x04\x06\x13\x02FR1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\r0\x0b\x06\x03U\x04\x0b\x0c\x04Unit1\r0\x0b\x06\x03U\x04\x03\x0c\x04user0\x82\x01\xa20\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01\x05\x00\x03\x82\x01\x8f\x000\x82\x01\x8a\x02\x82\x01\x81\x00\xb5\xd9-\x8f\xbe%\x04\x8d=\xe9F\xa6-\xac\x82\xef\x9e\x88\\\xf3dNH\x02\xb4o\x15\xc6\xdb;\xb1\xd1JmaI\xc4w_r\x83\x02\xb4L\x03CC.\x97\xbf\xc44m\xb8\xda\xca\xcex\xe9@\x96\xa4\xfd\xa0\xd0\x1cP\x89%6.\x92\x83\xd2g\x94\\`\xb0G\xbf\xb7\x9e\xac\x10S5\x0f\x8e*]\xc8\x81C&amp;\xed\xe22R\xb5M\x91\x12u?,\xc0\xee\x0f\xe6\x93\x97\x13\\\xb48N(\xcdBox\xe9nX\&#x27;\xd1dj;\xab\xd5\x15\xc6me\xa4\x05\x9f\x14r?\xe4\xdd\x87\xfe\xf1\x0eg\xfc\xf9\x89O\xe3\xdb2\xa7h\xc5\xe7f\x84&amp;*9:K4\xe5\xf4\xa6\&#x27;&amp;-\xa3\xb9-&amp;!q\x96\xc1\xf9-F\xc4 \x82c\x1a\xff(\x90V\xbc&quot;\x90\xe5\x8bTPX\xb0\x88*jg\x18w}0\x84\xd7+\x92\xd6R\xad\x12\xa6_F\x97\xc8$F\xd9\&#x27;\x16\xcb\xf8;4m\xd6nF\x00|\x18\xb9\x17C\xe1\xf9\xc3s/\x0b\xca\xe0q\x01\xbd\x9fY$\xab\xccST\&#x27;\xd6&gt;,H\xde\xc84\r)\x9f\xd7\xc7\xac(:\xd7YR\xe2\xe5\x99\x13f\xb8\x12F(\x8b\x1a\x81/E\xb3a&gt;\xbe\xf8\xad\x1c\xb7\xb8\xed\x84w?q\x91\x9e\xda\x86\x7f\xbf=\xf0\x06\xb4\xfb\xdfe\xe0TO\xbe[F\xb9\xa8q\xbb\xac\x8e0&lt;\xc9\xad*f\x1e\x1f/]\xc1\xc1\x17\xfb\xe7\xe8\x02\xe5\x87\xc2+\x1f\x02\x84k\xc2\xb0V\x90&amp;\xa7\xac\xd0\xb4\xb9\xc9\xa8\xbc\x19\xdb\x8e\x0b\t&amp;&lt;\xdd\xb6\x96{+\x83\x02\x03\x01\x00\x01\xa3\x82\x03#0\x82\x03\x1f0\x1d\x06\x03U\x1d\x0e\x04\x16\x04\x14\x13\x9c\xae\x10\&#x27;\xdc\xb5\xcaE|\x81U\x8bF\x8a\x8ei\xb7\xc410\x1f\x06\x03U\x1d#\x04\x180\x16\x80\x14\xc6\xfd\xf8\xc3\x0c\xf7$&quot;Lg\xf5D\x9f;Y\x9a7S\xefV0\x0b\x06\x03U\x1d\x0f\x04\x04\x03\x02\x07\x800\x16\x06\x03U\x1d%\x01\x01\xff\x04\x0c0\n\x06\x08+\x06\x01\x05\x05\x07\x03\x030A\x06\x03U\x1d\x1f\x04:080\x1a\xa0\x18\xa0\x16\x86\x14http://localhost/crl0\x1a\xa0\x18\xa0\x16\x86\x14ldap://localhost/crl0E\x06\x03U\x1d.\x04&gt;0&lt;0\x1c\xa0\x1a\xa0\x18\x86\x16http://localhost/delta0\x1c\xa0\x1a\xa0\x18\x86\x16ldap://localhost/delta0\x81\xe5\x06\x03U\x1d\x11\x04\x81\xdd0\x81\xda\x82\x0fwww.example.com\x87\x04\x7f\x00\x00\x01\x88\x03*\x03\x04\x81\x11email@example.com\xa0\x1f\x06\n+\x06\x01\x04\x01\x827\x14\x02\x03\xa0\x11\x0c\x0fupn@example.com\xa4&lt;0:1\x140\x12\x06\n\t\x92&amp;\x89\x93\xf2,d\x01\x19\x16\x04LDAP1\x100\x0e\x06\x03U\x04\n\x0c\x07Example1\x100\x0e\x06\x03U\x04\x03\x0c\x07machine\xa0\x1f\x06\t+\x06\x01\x04\x01\x827\x19\x01\xa0\x12\x04\x10\xacK)\x06\xaa\xd6]O\xa9\x9cL\xbc\xb0je\xd9\xa0)\x06\x08+\x06\x01\x05\x05\x07\x08\t\xa0\x1d\x0c\x1bsmtpUTF8Mailbox@example.com0\x1c\x06\x03U\x1d\x12\x04\x150\x13\x81\x11admin@example.com0\x81\x94\x06\x03U\x1d \x04\x81\x8c0\x81\x890R\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x010B0!\x06\x08+\x06\x01\x05\x05\x07\x02\x01\x16\x15http://localhost/csp10\x1d\x06\x08+\x06\x01\x05\x05\x07\x02\x020\x110\n\x0c\x03org0\x03\x02\x01\x01\x0c\x03txt03\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x020#0!\x06\x08+\x06\x01\x05\x05\x07\x02\x01\x16\x15http://localhost/cps20\x12\x06\t+\x06\x01\x05\x05\x070\x01\x05\x01\x01\xff\x04\x02\x05\x000)\x06\t+\x06\x01\x04\x01\x827\x19\x02\x04\x1c0\x1a\xa0\x18\x06\n+\x06\x01\x04\x01\x827\x19\x02\x01\xa0\n\x04\x08S-1-5-470R\x06\x08+\x06\x01\x05\x05\x07\x01\x01\x04F0D0!\x06\x08+\x06\x01\x05\x05\x070\x01\x86\x15http://localhost/ocsp0\x1f\x06\x08+\x06\x01\x05\x05\x070\x02\x86\x13http://localhost/ca0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x00\x03\x82\x01\x81\x009\xf5\x9bz\x8e\xfe\x91\xdd\xb7f\xb8\xa2jR\xe6\x1f;\xfeS\xcbhQY\xcd\xc7\x8d\xcf+\xa2:5T\xd4\xf5B%|:\xe0\xf99\xa8\xady\x14\xdd\xb6\x00l\x86\xd7\x0e\x03\x03\x93\xa7\xed\xdaiq\x15\xba\xfa\xa23[*\x94_\xd1\x102@\xc0\x8c\xd4\xe6\xda\xc2w\xc8\xe5=\xa4\xae\xcb\x1f\x93\x11\xfd\xc3\x84\x14\&#x27;U\xf1\x8d\xd3Z_t\xcd\x0b3\x8f2\xcc&amp;A\xcf \xe4\xa9\xc5B\xda\xcfb\xf1ey\x97f\xa7\xe7\n-\x16\xf0&lt;t9+\x0b+\xe0\xdbn\xeb\xd0\xc8\x8d\x99\xb8\x992\xe3\xe4\x9a\xaa\xc7`\xe3w0\xea\xd9/\xb8\x03k\x92\xb5\xe0\xcb\x8f\xc06\x17\x97cu\xa3\xd7\xe3\xef\xd9\x94\xae^\xb5\x1fO\xae\x85-\xf95Yd\r\xeb\x86\x86\x8e\xe09\nL\xe3\x8e\xef\x0c\xa3x\xed_R\xe1o\xf9\x07/\xe8x\&#x27;?\xa7_\x9e2VP\xd1Yu\x16\xdf\xf6v\x0c\xf2W\xee\xe7\xaeh4\xef\x8avl\xf7\x85\xa5%\xbf\xac\xaaP\xe2a\x07\xd8\x90n&lt;W\xef\xe7})\x93~8\xbe%\x96M&lt;\x9d\x18\xbf\x05\xd7\x9f\xb9]\xf7D\xcbj\x0f\x83\x8e\xfd\xc2XY\xf2t\xa5\xb1\x04\x8a\xba\xa2\xed\x85\x15\\J\x07\x0c\rOX\x8b\xe9\xc2\xcd\x1f\xcf.\xd7\xa7{QIy\x94\x03\xb4\x06\x9d\x06p#\x95\x9d\xaa\x8e&gt;\\\x10\xd9\x19l\xe0VQ\xa4AU\x08a\x8eO(\xfc\xe5\xfa{5Z\xd7\xec\xc4E\x06w\xfd\x1aW=\x1d\xd8\xe5EV\x14\xfaC^)\xeb=\xbcH|\xb5dF`1%0#\x06\t*\x86H\x86\xf7\r\x01\t\x151\x16\x04\x14\xee\xaeF\xd4 \xc0\xbfF\xdd36\x87\xc9\xd19\xfb4{\x8a\x070\x82\x07T\x06\t*\x86H\x86\xf7\r\x01\x07\x01\xa0\x82\x07E\x04\x82\x07A0\x82\x07=0\x82\x079\x06\x0b*\x86H\x86\xf7\r\x01\x0c\n\x01\x01\xa0\x82\x07\x010\x82\x06\xfd\x02\x01\x000\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01\x05\x00\x04\x82\x06\xe70\x82\x06\xe3\x02\x01\x00\x02\x82\x01\x81\x00\xb5\xd9-\x8f\xbe%\x04\x8d=\xe9F\xa6-\xac\x82\xef\x9e\x88\\\xf3dNH\x02\xb4o\x15\xc6\xdb;\xb1\xd1JmaI\xc4w_r\x83\x02\xb4L\x03CC.\x97\xbf\xc44m\xb8\xda\xca\xcex\xe9@\x96\xa4\xfd\xa0\xd0\x1cP\x89%6.\x92\x83\xd2g\x94\\`\xb0G\xbf\xb7\x9e\xac\x10S5\x0f\x8e*]\xc8\x81C&amp;\xed\xe22R\xb5M\x91\x12u?,\xc0\xee\x0f\xe6\x93\x97\x13\\\xb48N(\xcdBox\xe9nX\&#x27;\xd1dj;\xab\xd5\x15\xc6me\xa4\x05\x9f\x14r?\xe4\xdd\x87\xfe\xf1\x0eg\xfc\xf9\x89O\xe3\xdb2\xa7h\xc5\xe7f\x84&amp;*9:K4\xe5\xf4\xa6\&#x27;&amp;-\xa3\xb9-&amp;!q\x96\xc1\xf9-F\xc4 \x82c\x1a\xff(\x90V\xbc&quot;\x90\xe5\x8bTPX\xb0\x88*jg\x18w}0\x84\xd7+\x92\xd6R\xad\x12\xa6_F\x97\xc8$F\xd9\&#x27;\x16\xcb\xf8;4m\xd6nF\x00|\x18\xb9\x17C\xe1\xf9\xc3s/\x0b\xca\xe0q\x01\xbd\x9fY$\xab\xccST\&#x27;\xd6&gt;,H\xde\xc84\r)\x9f\xd7\xc7\xac(:\xd7YR\xe2\xe5\x99\x13f\xb8\x12F(\x8b\x1a\x81/E\xb3a&gt;\xbe\xf8\xad\x1c\xb7\xb8\xed\x84w?q\x91\x9e\xda\x86\x7f\xbf=\xf0\x06\xb4\xfb\xdfe\xe0TO\xbe[F\xb9\xa8q\xbb\xac\x8e0&lt;\xc9\xad*f\x1e\x1f/]\xc1\xc1\x17\xfb\xe7\xe8\x02\xe5\x87\xc2+\x1f\x02\x84k\xc2\xb0V\x90&amp;\xa7\xac\xd0\xb4\xb9\xc9\xa8\xbc\x19\xdb\x8e\x0b\t&amp;&lt;\xdd\xb6\x96{+\x83\x02\x03\x01\x00\x01\x02\x82\x01\x80\x01\xc7S\x03\xc1\xe7X\xc9\x0c\xde\xf8:\xed\xddo\x16j\xe5\x88\x8b4\xe2\xf3\x1f[\xa6n\x7f\x18k\xd8\x0cd\xfe\xf6\xe1\xa2\xd3L\x12\xb1\xa7X\x1e\x1a6\x115&amp;t\xd0\xb5v\x91EJ\x90\x84l;\x9e}\x94\xa1{\x07\x9b\xde\x0b\x88!&quot;{\xb9\x96\x1b\xc4_\x89\xb9\xd9\xed0\xd7\x1b\xfd\xc4Z\x17\x98\xe0{\xf2\x8f\xb6\x94\xc3\x0e\x9c\xf2{\x04\xbd:zX\xb4\xb6__p\xf8\x1cO^\xcf\xe2+\xd1\xfe!Z\xfce\x80\xe5:\xce\x11\x9f\xed\xc9R\xc23\x15\xb8i\xf9\xa9X\x88\xb9sU&gt;0\x1bd\xf6\xfbu\xd5[4,\xa5\xa8\x87\xaf\x00\xb8\xb0*\xdf\x8ekg\xe4\x0b\xe5\x88&quot;~u\xc8|\xe1\x8f\x98-\xd2M\xde\x9c\x7f\x94\x95\xd1\xe4T\xb4\x8b\x9f\x07\xcb\xea\xf8j\xac\x86\x01\xc1\x18\xc9\x98\x89&gt;\xd9WY,\x87\x07\xd2\x15\xe4\x0e\xb5\x14\xe2\xd6\xef\x06\x169\x93&lt;\xd6\x0b\\\xae+\x07D(\xd6\x0e\xe0v\x04tY\x0bH\xe3\xe4\xa16}_\xed0\xd4cL$\x1cNN\xeay\xd6\xcd\x93\xaa\xf4\x85G\xac\xf0\x1f\x17\x7f-\xe1\x0cV\x02\x92vc\xa1\xc0q\xb3[ \x9f\x88\xad\xb7\x16~cI.{8\xd2/C\xf7\x1cMM\xf9\xc53\x94%\xb5J\xc0K=_j\xe0\x8b\x10\xeb%D&gt;\xf46A\x0ec\xb61P&amp;\x08\xab\x19N\x04T\xf7\x1a\x13\xdeL7;\xdf\x00\x18\xf68^\r\x96\x14\x8csR?\xcar\xfc\xff\x0b\xfb\x95\xca\xeb\xdf\xe7\xf7\xc9\xda\x05\x91A\x80%\x1d\x8eD\xd3\xa1\x02\x81\xc1\x00\xeeNP\xe3\xe6\xd5$\x17h\xc0\xf7.&lt;1}\xecKlX%\x8a\x0c&quot;C\x9a\xa6\xf8ZZD\xe7A\xafR\x92\x98\x01\x8d\xf0\\:\x83\xd8x\x1c\x1b^\x7f\x06\x01\xf3\xb4\xf8\xb8\x1e\xf8\xa3\xff\xa2&quot;\xd6\x0ca\x8c\xf4\xe0\xff\xd1-\xc5 -0\x18\xd6!+\xbd\xab\x1a\x8c\xfa\xe7\x1b\x01\x10\xcd@f\x98\x89\xffI\x07\xdd=T\x18Z\xa8!\xd3X\x93\xa7\xd0\xd38\x81\xd0\xaepN%\xb9%\xfaY\x7fM\x81\xc9\x99\x90\xa9\x98\x87\x1cn2\xe7&gt;!?\x05\x96?\xddGb\xa2\xee\xf3x\xc1\x07\xdf\xe3\x1dy\xd6uxc5\xef\xa09\x93\r|`v2F\xdf~WA\x7fy\xb7\xe7\x8eoh#u\n\x1f\xa28\xa1a\x08\x8c\x00,\xfe\xf8\x94\x93\x02\x81\xc1\x00\xc3Y\xb9\x8b\t\xc7\xdb\xe1,\xf9!_&gt;\xc4[=\x82\xa6\xce\t\xc0\xcd\x85t\xb5c\x80L\xd9\x8b\xed\x9f\x1el\xb3\xd2\xdd@#7Z\xc9\xf7\x87\xd9U\xee\x84*\xc0\x0c\x07}-\xdd\xf4u\xef\xd1\xd9@:\x93s\xc2\xfb\xc1&lt;\xbe\xa5K\xaa\x8e\x8b\xd0\xa5[K.\xa23 \xe3P&lt;&amp;\x08\xe3_\xe8\\ \xb7 \xe6]\xa2\x01\xa0c\xf3\xb2W\xc7\xb1 \xbf\r\x88\x12l:\xbf\xfe\x06l\x99\x87#\x88\xaf\x0ch\xff\xa6\x7f\x1e\x1e\xa3\xb9UYi\xce\xb1A\x81\x08\xd6\xec\xbad\x81,\xfdC\x04\xd6\xfdL\x81(N|\x06\xf9}\xb7\x9fl\xfb\xec\xf3\xd7\x9d\xd9wl_o\xf2\xd0:lK\x81\xb5\x0c8J+\xd4\xa5s\xc5D\xc9\xb0-\x85\xd3Q\x02\x81\xc0M\xb9OZ\xb5\x8b\xe8\xe4\x95\xae\xf2/\xabD=\x1c\xd7\x90\xb3\xc32\x9e8\x82\xb2+)/V\xe7\xc8A=,\x82Q\x7f\x98J\xbf\xd9\xf9\xec\x9dh\x15i!\xa6\xd4\xf6&amp;\x9dDx\x1d\x82g\xba\xfa\xff\xb34\x11\xe4@\x8aO0Mm\xec/\x16\xba\xa8@\xfa\xf0\x96\x8dJ\xbc\x1b\xab\xa2N?e\xf6\xf4sE\xdf\x81\xc2!\xee{\x8b\x00\xd5L\xbb\x83\xedq&amp;\xa9\xf8e\x1c\x8d\xf0q\xcd\xb84~w\xca\x0f\xf5\xbd \x03vu\xc8_c\xdax\xbftT\x07\xeae\x00\xff\xc1M\xb9\xa1\xc3\xae\xbb\x05\x7f\x1az_\xd4\x83\xdf\xee\xf38J\x1a\xb9\xdfs\x10x\x8e]i(i\x8b\x98\xc3u\x04\x93#\xf64Q\x15\x85T\xff\x93\xa1\xef\x0b\x0e\no\x02\x81\xc1\x00\xa2\xd7\x9d\xa2\xb8q\x80\xeaQ\x1a\x0f\xe6\x9c\xa5\x04E\xdf.{\\\x87\xfb\n\xbf\xc2!\x02\xa7\x8dEf\xbc\x98\x99\x16\xc1\xb5+\xac\xef\x8c\xe0\x05V\x9a&amp;V\xe0\x97\xdeeh\xac\xc1\xda^\xd9\x1d#\xfa\x0c\xdf\x87a\x1dm\xcd\xa4|k\xc0\n\x9a/\x14\xabr\xd1\xd6:\xe1\x92\r\xcb)\x88\xaf*\x13\x1d\xd8\x06q\x81\x9cf\xfb\x10\x8e\n#\xf0K\xda+\xdeWD\xc9dJ\x12#Ow=z1\xbb\xbeI\xe5wu|\xeeDFXF\xbbN\x00\xb4\x8a\xf0F\xc6\xfe\x9aq\xba,0;\xa2m[e\xe5+YU+p\x88\xf3ri\x14ia\x19\xd7h?\n\x9d-e]\xac\x94\xb7\x07\xaeE$\xbd\x9b\x9e\xb3\xf1\x83\xf32\xa7J\x14x\x951\x02\x81\xc0*\x19F\x90!\xa0\x11\x91\xd9\x15\xa5u\xc3\xec_\x0b\x88B\xc8\x88YS,\xfcY\xf7\xb4\x12\x13!\xee?+\x1d\x8b\xb7\xb1\xbc\x98\xef\xfb0\x9a\x11\x9b\x83(&lt;\x1bm\xed\xc2vx\x0f\x9d\x9f\xee\x94\xee\xf9DZ/\xa8\x85+\xcf\xec\xb0\xfe\xac*/\xe3\xa9\xaf1\xf3\x9f\r\xdf\x94\xe7\xfb\x04\x94\xd8z%\x18\xed\x93#\xdfB\x9c\xf3\xae7\x7f\xc7\x98\xb8\xd23\xebY\xae\xfc -\x17g\xcaD\xad{\xe9\xfca\x0e\x1c\x01\xfc\xacn\xaee\x87.\x0fmaH\xab`G\xf3\x0c\xee$\xe9\xe1\xa7\x88\xbb\x9f\xa42\x8b\xee\xee-V?\xd4,\xa11\xf13\xde\xaa\x9f\x14\xdb\x92\xcf\x08\x9a\x86\xf6\x85\xf9| s\x99\xbc\xcb\xda\xbc\xf4S\x81\xb3\xe1\xb3\x8c\x14\xa71%0#\x06\t*\x86H\x86\xf7\r\x01\t\x151\x16\x04\x14\xee\xaeF\xd4 \xc0\xbfF\xdd36\x87\xc9\xd19\xfb4{\x8a\x070A010\r\x06\t`\x86H\x01e\x03\x04\x02\x01\x05\x00\x04 \xf8?\rF\xfa\xb9h\xec\xf7A\xb1\t\xb7\xff\x8cr&gt;\x04\xd0\x9ccR\x82\xa3 Q\xbd\xe8j\xa9D\xd3\x04\x08\x95\x8d\xd8$\xebq{\x9f\x02\x02\x08\x00&#x27; 
+
+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 
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            11:75:0f:89:7c:3f:55:f5:36:76:70:23:ad:05:86:e4:04:a2:b8:78
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: O = Company, CN = Example CA
+        Validity
+            Not Before: Apr 30 10:29:58 2023 GMT
+            Not After : Apr 28 14:20:39 2033 GMT
+        Subject: C = FR, O = Company, OU = Unit, CN = user
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (3072 bit)
+                Modulus:
+                    00:b5:d9:2d:8f:be:25:04:8d:3d:e9:46:a6:2d:ac:
+                    82:ef:9e:88:5c:f3:64:4e:48:02:b4:6f:15:c6:db:
+                    3b:b1:d1:4a:6d:61:49:c4:77:5f:72:83:02:b4:4c:
+                    03:43:43:2e:97:bf:c4:34:6d:b8:da:ca:ce:78:e9:
+                    40:96:a4:fd:a0:d0:1c:50:89:25:36:2e:92:83:d2:
+                    67:94:5c:60:b0:47:bf:b7:9e:ac:10:53:35:0f:8e:
+                    2a:5d:c8:81:43:26:ed:e2:32:52:b5:4d:91:12:75:
+                    3f:2c:c0:ee:0f:e6:93:97:13:5c:b4:38:4e:28:cd:
+                    42:6f:78:e9:6e:58:27:d1:64:6a:3b:ab:d5:15:c6:
+                    6d:65:a4:05:9f:14:72:3f:e4:dd:87:fe:f1:0e:67:
+                    fc:f9:89:4f:e3:db:32:a7:68:c5:e7:66:84:26:2a:
+                    39:3a:4b:34:e5:f4:a6:27:26:2d:a3:b9:2d:26:21:
+                    71:96:c1:f9:2d:46:c4:20:82:63:1a:ff:28:90:56:
+                    bc:22:90:e5:8b:54:50:58:b0:88:2a:6a:67:18:77:
+                    7d:30:84:d7:2b:92:d6:52:ad:12:a6:5f:46:97:c8:
+                    24:46:d9:27:16:cb:f8:3b:34:6d:d6:6e:46:00:7c:
+                    18:b9:17:43:e1:f9:c3:73:2f:0b:ca:e0:71:01:bd:
+                    9f:59:24:ab:cc:53:54:27:d6:3e:2c:48:de:c8:34:
+                    0d:29:9f:d7:c7:ac:28:3a:d7:59:52:e2:e5:99:13:
+                    66:b8:12:46:28:8b:1a:81:2f:45:b3:61:3e:be:f8:
+                    ad:1c:b7:b8:ed:84:77:3f:71:91:9e:da:86:7f:bf:
+                    3d:f0:06:b4:fb:df:65:e0:54:4f:be:5b:46:b9:a8:
+                    71:bb:ac:8e:30:3c:c9:ad:2a:66:1e:1f:2f:5d:c1:
+                    c1:17:fb:e7:e8:02:e5:87:c2:2b:1f:02:84:6b:c2:
+                    b0:56:90:26:a7:ac:d0:b4:b9:c9:a8:bc:19:db:8e:
+                    0b:09:26:3c:dd:b6:96:7b:2b:83
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                13:9C:AE:10:27:DC:B5:CA:45:7C:81:55:8B:46:8A:8E:69:B7:C4:31
+            X509v3 Authority Key Identifier: 
+                keyid:C6:FD:F8:C3:0C:F7:24:22:4C:67:F5:44:9F:3B:59:9A:37:53:EF:56
+
+            X509v3 Key Usage: 
+                Digital Signature
+            X509v3 Extended Key Usage: critical
+                Code Signing
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://localhost/crl
+
+                Full Name:
+                  URI:ldap://localhost/crl
+
+            X509v3 Freshest CRL: 
+
+                Full Name:
+                  URI:http://localhost/delta
+
+                Full Name:
+                  URI:ldap://localhost/delta
+
+            X509v3 Subject Alternative Name: 
+                DNS:www.example.com, IP Address:127.0.0.1, Registered ID:1.2.3.4, email:email@example.com, othername:&lt;unsupported&gt;, DirName:/DC=LDAP/O=Example/CN=machine, othername:&lt;unsupported&gt;, othername:&lt;unsupported&gt;
+            X509v3 Issuer Alternative Name: 
+                email:admin@example.com
+            X509v3 Certificate Policies: 
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.1
+                  CPS: http://localhost/csp1
+                  User Notice:
+                    Organization: org
+                    Number: 1
+                    Explicit Text: txt
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.2
+                  CPS: http://localhost/cps2
+
+            OCSP No Check: critical
+
+            1.3.6.1.4.1.311.25.2: 
+                0....
++.....7....
+..S-1-5-47
+            Authority Information Access: 
+                OCSP - URI:http://localhost/ocsp
+                CA Issuers - URI:http://localhost/ca
+
+    Signature Algorithm: sha256WithRSAEncryption
+         39:f5:9b:7a:8e:fe:91:dd:b7:66:b8:a2:6a:52:e6:1f:3b:fe:
+         53:cb:68:51:59:cd:c7:8d:cf:2b:a2:3a:35:54:d4:f5:42:25:
+         7c:3a:e0:f9:39:a8:ad:79:14:dd:b6:00:6c:86:d7:0e:03:03:
+         93:a7:ed:da:69:71:15:ba:fa:a2:33:5b:2a:94:5f:d1:10:32:
+         40:c0:8c:d4:e6:da:c2:77:c8:e5:3d:a4:ae:cb:1f:93:11:fd:
+         c3:84:14:27:55:f1:8d:d3:5a:5f:74:cd:0b:33:8f:32:cc:26:
+         41:cf:20:e4:a9:c5:42:da:cf:62:f1:65:79:97:66:a7:e7:0a:
+         2d:16:f0:3c:74:39:2b:0b:2b:e0:db:6e:eb:d0:c8:8d:99:b8:
+         99:32:e3:e4:9a:aa:c7:60:e3:77:30:ea:d9:2f:b8:03:6b:92:
+         b5:e0:cb:8f:c0:36:17:97:63:75:a3:d7:e3:ef:d9:94:ae:5e:
+         b5:1f:4f:ae:85:2d:f9:35:59:64:0d:eb:86:86:8e:e0:39:0a:
+         4c:e3:8e:ef:0c:a3:78:ed:5f:52:e1:6f:f9:07:2f:e8:78:27:
+         3f:a7:5f:9e:32:56:50:d1:59:75:16:df:f6:76:0c:f2:57:ee:
+         e7:ae:68:34:ef:8a:76:6c:f7:85:a5:25:bf:ac:aa:50:e2:61:
+         07:d8:90:6e:3c:57:ef:e7:7d:29:93:7e:38:be:25:96:4d:3c:
+         9d:18:bf:05:d7:9f:b9:5d:f7:44:cb:6a:0f:83:8e:fd:c2:58:
+         59:f2:74:a5:b1:04:8a:ba:a2:ed:85:15:5c:4a:07:0c:0d:4f:
+         58:8b:e9:c2:cd:1f:cf:2e:d7:a7:7b:51:49:79:94:03:b4:06:
+         9d:06:70:23:95:9d:aa:8e:3e:5c:10:d9:19:6c:e0:56:51:a4:
+         41:55:08:61:8e:4f:28:fc:e5:fa:7b:35:5a:d7:ec:c4:45:06:
+         77:fd:1a:57:3d:1d:d8:e5:45:56:14:fa:43:5e:29:eb:3d:bc:
+         48:7c:b5:64:46:60
+
+RSA Private-Key: (3072 bit, 2 primes)
+modulus:
+    00:b5:d9:2d:8f:be:25:04:8d:3d:e9:46:a6:2d:ac:
+    82:ef:9e:88:5c:f3:64:4e:48:02:b4:6f:15:c6:db:
+    3b:b1:d1:4a:6d:61:49:c4:77:5f:72:83:02:b4:4c:
+    03:43:43:2e:97:bf:c4:34:6d:b8:da:ca:ce:78:e9:
+    40:96:a4:fd:a0:d0:1c:50:89:25:36:2e:92:83:d2:
+    67:94:5c:60:b0:47:bf:b7:9e:ac:10:53:35:0f:8e:
+    2a:5d:c8:81:43:26:ed:e2:32:52:b5:4d:91:12:75:
+    3f:2c:c0:ee:0f:e6:93:97:13:5c:b4:38:4e:28:cd:
+    42:6f:78:e9:6e:58:27:d1:64:6a:3b:ab:d5:15:c6:
+    6d:65:a4:05:9f:14:72:3f:e4:dd:87:fe:f1:0e:67:
+    fc:f9:89:4f:e3:db:32:a7:68:c5:e7:66:84:26:2a:
+    39:3a:4b:34:e5:f4:a6:27:26:2d:a3:b9:2d:26:21:
+    71:96:c1:f9:2d:46:c4:20:82:63:1a:ff:28:90:56:
+    bc:22:90:e5:8b:54:50:58:b0:88:2a:6a:67:18:77:
+    7d:30:84:d7:2b:92:d6:52:ad:12:a6:5f:46:97:c8:
+    24:46:d9:27:16:cb:f8:3b:34:6d:d6:6e:46:00:7c:
+    18:b9:17:43:e1:f9:c3:73:2f:0b:ca:e0:71:01:bd:
+    9f:59:24:ab:cc:53:54:27:d6:3e:2c:48:de:c8:34:
+    0d:29:9f:d7:c7:ac:28:3a:d7:59:52:e2:e5:99:13:
+    66:b8:12:46:28:8b:1a:81:2f:45:b3:61:3e:be:f8:
+    ad:1c:b7:b8:ed:84:77:3f:71:91:9e:da:86:7f:bf:
+    3d:f0:06:b4:fb:df:65:e0:54:4f:be:5b:46:b9:a8:
+    71:bb:ac:8e:30:3c:c9:ad:2a:66:1e:1f:2f:5d:c1:
+    c1:17:fb:e7:e8:02:e5:87:c2:2b:1f:02:84:6b:c2:
+    b0:56:90:26:a7:ac:d0:b4:b9:c9:a8:bc:19:db:8e:
+    0b:09:26:3c:dd:b6:96:7b:2b:83
+publicExponent: 65537 (0x10001)
+privateExponent:
+    01:c7:53:03:c1:e7:58:c9:0c:de:f8:3a:ed:dd:6f:
+    16:6a:e5:88:8b:34:e2:f3:1f:5b:a6:6e:7f:18:6b:
+    d8:0c:64:fe:f6:e1:a2:d3:4c:12:b1:a7:58:1e:1a:
+    36:11:35:26:74:d0:b5:76:91:45:4a:90:84:6c:3b:
+    9e:7d:94:a1:7b:07:9b:de:0b:88:21:22:7b:b9:96:
+    1b:c4:5f:89:b9:d9:ed:30:d7:1b:fd:c4:5a:17:98:
+    e0:7b:f2:8f:b6:94:c3:0e:9c:f2:7b:04:bd:3a:7a:
+    58:b4:b6:5f:5f:70:f8:1c:4f:5e:cf:e2:2b:d1:fe:
+    21:5a:fc:65:80:e5:3a:ce:11:9f:ed:c9:52:c2:33:
+    15:b8:69:f9:a9:58:88:b9:73:55:3e:30:1b:64:f6:
+    fb:75:d5:5b:34:2c:a5:a8:87:af:00:b8:b0:2a:df:
+    8e:6b:67:e4:0b:e5:88:22:7e:75:c8:7c:e1:8f:98:
+    2d:d2:4d:de:9c:7f:94:95:d1:e4:54:b4:8b:9f:07:
+    cb:ea:f8:6a:ac:86:01:c1:18:c9:98:89:3e:d9:57:
+    59:2c:87:07:d2:15:e4:0e:b5:14:e2:d6:ef:06:16:
+    39:93:3c:d6:0b:5c:ae:2b:07:44:28:d6:0e:e0:76:
+    04:74:59:0b:48:e3:e4:a1:36:7d:5f:ed:30:d4:63:
+    4c:24:1c:4e:4e:ea:79:d6:cd:93:aa:f4:85:47:ac:
+    f0:1f:17:7f:2d:e1:0c:56:02:92:76:63:a1:c0:71:
+    b3:5b:20:9f:88:ad:b7:16:7e:63:49:2e:7b:38:d2:
+    2f:43:f7:1c:4d:4d:f9:c5:33:94:25:b5:4a:c0:4b:
+    3d:5f:6a:e0:8b:10:eb:25:44:3e:f4:36:41:0e:63:
+    b6:31:50:26:08:ab:19:4e:04:54:f7:1a:13:de:4c:
+    37:3b:df:00:18:f6:38:5e:0d:96:14:8c:73:52:3f:
+    ca:72:fc:ff:0b:fb:95:ca:eb:df:e7:f7:c9:da:05:
+    91:41:80:25:1d:8e:44:d3:a1
+prime1:
+    00:ee:4e:50:e3:e6:d5:24:17:68:c0:f7:2e:3c:31:
+    7d:ec:4b:6c:58:25:8a:0c:22:43:9a:a6:f8:5a:5a:
+    44:e7:41:af:52:92:98:01:8d:f0:5c:3a:83:d8:78:
+    1c:1b:5e:7f:06:01:f3:b4:f8:b8:1e:f8:a3:ff:a2:
+    22:d6:0c:61:8c:f4:e0:ff:d1:2d:c5:20:2d:30:18:
+    d6:21:2b:bd:ab:1a:8c:fa:e7:1b:01:10:cd:40:66:
+    98:89:ff:49:07:dd:3d:54:18:5a:a8:21:d3:58:93:
+    a7:d0:d3:38:81:d0:ae:70:4e:25:b9:25:fa:59:7f:
+    4d:81:c9:99:90:a9:98:87:1c:6e:32:e7:3e:21:3f:
+    05:96:3f:dd:47:62:a2:ee:f3:78:c1:07:df:e3:1d:
+    79:d6:75:78:63:35:ef:a0:39:93:0d:7c:60:76:32:
+    46:df:7e:57:41:7f:79:b7:e7:8e:6f:68:23:75:0a:
+    1f:a2:38:a1:61:08:8c:00:2c:fe:f8:94:93
+prime2:
+    00:c3:59:b9:8b:09:c7:db:e1:2c:f9:21:5f:3e:c4:
+    5b:3d:82:a6:ce:09:c0:cd:85:74:b5:63:80:4c:d9:
+    8b:ed:9f:1e:6c:b3:d2:dd:40:23:37:5a:c9:f7:87:
+    d9:55:ee:84:2a:c0:0c:07:7d:2d:dd:f4:75:ef:d1:
+    d9:40:3a:93:73:c2:fb:c1:3c:be:a5:4b:aa:8e:8b:
+    d0:a5:5b:4b:2e:a2:33:20:e3:50:3c:26:08:e3:5f:
+    e8:5c:20:b7:20:e6:5d:a2:01:a0:63:f3:b2:57:c7:
+    b1:20:bf:0d:88:12:6c:3a:bf:fe:06:6c:99:87:23:
+    88:af:0c:68:ff:a6:7f:1e:1e:a3:b9:55:59:69:ce:
+    b1:41:81:08:d6:ec:ba:64:81:2c:fd:43:04:d6:fd:
+    4c:81:28:4e:7c:06:f9:7d:b7:9f:6c:fb:ec:f3:d7:
+    9d:d9:77:6c:5f:6f:f2:d0:3a:6c:4b:81:b5:0c:38:
+    4a:2b:d4:a5:73:c5:44:c9:b0:2d:85:d3:51
+exponent1:
+    4d:b9:4f:5a:b5:8b:e8:e4:95:ae:f2:2f:ab:44:3d:
+    1c:d7:90:b3:c3:32:9e:38:82:b2:2b:29:2f:56:e7:
+    c8:41:3d:2c:82:51:7f:98:4a:bf:d9:f9:ec:9d:68:
+    15:69:21:a6:d4:f6:26:9d:44:78:1d:82:67:ba:fa:
+    ff:b3:34:11:e4:40:8a:4f:30:4d:6d:ec:2f:16:ba:
+    a8:40:fa:f0:96:8d:4a:bc:1b:ab:a2:4e:3f:65:f6:
+    f4:73:45:df:81:c2:21:ee:7b:8b:00:d5:4c:bb:83:
+    ed:71:26:a9:f8:65:1c:8d:f0:71:cd:b8:34:7e:77:
+    ca:0f:f5:bd:20:03:76:75:c8:5f:63:da:78:bf:74:
+    54:07:ea:65:00:ff:c1:4d:b9:a1:c3:ae:bb:05:7f:
+    1a:7a:5f:d4:83:df:ee:f3:38:4a:1a:b9:df:73:10:
+    78:8e:5d:69:28:69:8b:98:c3:75:04:93:23:f6:34:
+    51:15:85:54:ff:93:a1:ef:0b:0e:0a:6f
+exponent2:
+    00:a2:d7:9d:a2:b8:71:80:ea:51:1a:0f:e6:9c:a5:
+    04:45:df:2e:7b:5c:87:fb:0a:bf:c2:21:02:a7:8d:
+    45:66:bc:98:99:16:c1:b5:2b:ac:ef:8c:e0:05:56:
+    9a:26:56:e0:97:de:65:68:ac:c1:da:5e:d9:1d:23:
+    fa:0c:df:87:61:1d:6d:cd:a4:7c:6b:c0:0a:9a:2f:
+    14:ab:72:d1:d6:3a:e1:92:0d:cb:29:88:af:2a:13:
+    1d:d8:06:71:81:9c:66:fb:10:8e:0a:23:f0:4b:da:
+    2b:de:57:44:c9:64:4a:12:23:4f:77:3d:7a:31:bb:
+    be:49:e5:77:75:7c:ee:44:46:58:46:bb:4e:00:b4:
+    8a:f0:46:c6:fe:9a:71:ba:2c:30:3b:a2:6d:5b:65:
+    e5:2b:59:55:2b:70:88:f3:72:69:14:69:61:19:d7:
+    68:3f:0a:9d:2d:65:5d:ac:94:b7:07:ae:45:24:bd:
+    9b:9e:b3:f1:83:f3:32:a7:4a:14:78:95:31
+coefficient:
+    2a:19:46:90:21:a0:11:91:d9:15:a5:75:c3:ec:5f:
+    0b:88:42:c8:88:59:53:2c:fc:59:f7:b4:12:13:21:
+    ee:3f:2b:1d:8b:b7:b1:bc:98:ef:fb:30:9a:11:9b:
+    83:28:3c:1b:6d:ed:c2:76:78:0f:9d:9f:ee:94:ee:
+    f9:44:5a:2f:a8:85:2b:cf:ec:b0:fe:ac:2a:2f:e3:
+    a9:af:31:f3:9f:0d:df:94:e7:fb:04:94:d8:7a:25:
+    18:ed:93:23:df:42:9c:f3:ae:37:7f:c7:98:b8:d2:
+    33:eb:59:ae:fc:20:2d:17:67:ca:44:ad:7b:e9:fc:
+    61:0e:1c:01:fc:ac:6e:ae:65:87:2e:0f:6d:61:48:
+    ab:60:47:f3:0c:ee:24:e9:e1:a7:88:bb:9f:a4:32:
+    8b:ee:ee:2d:56:3f:d4:2c:a1:31:f1:33:de:aa:9f:
+    14:db:92:cf:08:9a:86:f6:85:f9:7c:20:73:99:bc:
+    cb:da:bc:f4:53:81:b3:e1:b3:8c:14:a7
+ 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/p12_test.py::test_dump_ecdsa</td>
+          <td class="col-duration">0.02</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>b&#x27;0\x82\x07{\x02\x01\x030\x82\x071\x06\t*\x86H\x86\xf7\r\x01\x07\x01\xa0\x82\x07&quot;\x04\x82\x07\x1e0\x82\x07\x1a0\x82\x06;\x06\t*\x86H\x86\xf7\r\x01\x07\x01\xa0\x82\x06,\x04\x82\x06(0\x82\x06$0\x82\x06 \x06\x0b*\x86H\x86\xf7\r\x01\x0c\n\x01\x03\xa0\x82\x05\xe80\x82\x05\xe4\x06\n*\x86H\x86\xf7\r\x01\t\x16\x01\xa0\x82\x05\xd4\x04\x82\x05\xd00\x82\x05\xcc0\x82\x044\xa0\x03\x02\x01\x02\x02\x14\x16Gm\xa1^\xb71\x7f\xc0J\xb7\xa0\xa5\xae\xd9\xcb\x92\xdbf\xd60\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x000\&#x27;1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\x130\x11\x06\x03U\x04\x03\x0c\nExample CA0\x1e\x17\r230430103051Z\x17\r330428142039Z0=1\x0b0\t\x06\x03U\x04\x06\x13\x02FR1\x100\x0e\x06\x03U\x04\n\x0c\x07Company1\r0\x0b\x06\x03U\x04\x0b\x0c\x04Unit1\r0\x0b\x06\x03U\x04\x03\x0c\x04user0Y0\x13\x06\x07*\x86H\xce=\x02\x01\x06\x08*\x86H\xce=\x03\x01\x07\x03B\x00\x04c&amp;&amp;3\xfd\xad\x88#KVBn\xe6\xd5\x82\xbd\xaa\xb8_x@K\xac&amp;\xc1\xef\xda\xfb\x83J\xb3\xf3W\x030Z\xf9b\xa2\x01\x88A\xc2&gt;\xd5e\xe8n\xe4\xe0\xb1]X2&gt;\xe1\x10+\xdb\x92A3\x9e\xe3\xa3\x82\x03#0\x82\x03\x1f0\x1d\x06\x03U\x1d\x0e\x04\x16\x04\x14\xddsAX%K+\x89\xc3 \xde%\x99\x17\x8e\xe6\xfeh\xaep0\x1f\x06\x03U\x1d#\x04\x180\x16\x80\x14\xc6\xfd\xf8\xc3\x0c\xf7$&quot;Lg\xf5D\x9f;Y\x9a7S\xefV0\x0b\x06\x03U\x1d\x0f\x04\x04\x03\x02\x07\x800\x16\x06\x03U\x1d%\x01\x01\xff\x04\x0c0\n\x06\x08+\x06\x01\x05\x05\x07\x03\x030A\x06\x03U\x1d\x1f\x04:080\x1a\xa0\x18\xa0\x16\x86\x14http://localhost/crl0\x1a\xa0\x18\xa0\x16\x86\x14ldap://localhost/crl0E\x06\x03U\x1d.\x04&gt;0&lt;0\x1c\xa0\x1a\xa0\x18\x86\x16http://localhost/delta0\x1c\xa0\x1a\xa0\x18\x86\x16ldap://localhost/delta0\x81\xe5\x06\x03U\x1d\x11\x04\x81\xdd0\x81\xda\x82\x0fwww.example.com\x87\x04\x7f\x00\x00\x01\x88\x03*\x03\x04\x81\x11email@example.com\xa0\x1f\x06\n+\x06\x01\x04\x01\x827\x14\x02\x03\xa0\x11\x0c\x0fupn@example.com\xa4&lt;0:1\x140\x12\x06\n\t\x92&amp;\x89\x93\xf2,d\x01\x19\x16\x04LDAP1\x100\x0e\x06\x03U\x04\n\x0c\x07Example1\x100\x0e\x06\x03U\x04\x03\x0c\x07machine\xa0\x1f\x06\t+\x06\x01\x04\x01\x827\x19\x01\xa0\x12\x04\x10\xacK)\x06\xaa\xd6]O\xa9\x9cL\xbc\xb0je\xd9\xa0)\x06\x08+\x06\x01\x05\x05\x07\x08\t\xa0\x1d\x0c\x1bsmtpUTF8Mailbox@example.com0\x1c\x06\x03U\x1d\x12\x04\x150\x13\x81\x11admin@example.com0\x81\x94\x06\x03U\x1d \x04\x81\x8c0\x81\x890R\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x010B0!\x06\x08+\x06\x01\x05\x05\x07\x02\x01\x16\x15http://localhost/csp10\x1d\x06\x08+\x06\x01\x05\x05\x07\x02\x020\x110\n\x0c\x03org0\x03\x02\x01\x01\x0c\x03txt03\x06\x0c+\x06\x01\x04\x01\xb0-\x05\x01\x01\x01\x020#0!\x06\x08+\x06\x01\x05\x05\x07\x02\x01\x16\x15http://localhost/cps20\x12\x06\t+\x06\x01\x05\x05\x070\x01\x05\x01\x01\xff\x04\x02\x05\x000)\x06\t+\x06\x01\x04\x01\x827\x19\x02\x04\x1c0\x1a\xa0\x18\x06\n+\x06\x01\x04\x01\x827\x19\x02\x01\xa0\n\x04\x08S-1-5-470R\x06\x08+\x06\x01\x05\x05\x07\x01\x01\x04F0D0!\x06\x08+\x06\x01\x05\x05\x070\x01\x86\x15http://localhost/ocsp0\x1f\x06\x08+\x06\x01\x05\x05\x070\x02\x86\x13http://localhost/ca0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x0b\x05\x00\x03\x82\x01\x81\x00u\x1d\xeas\xe2*\xdb\xf7/\xfe\x11p\xda\x13F\xee3w\xbf\x0f\x81\xdf\xc2&quot;I\xa9H\xd2\xbb\xd8\xa5bfVw\xbc%\x1f`\xect\x83\xd3GkSg\x13&lt;m&quot;X\xd5&gt;\x1a\xb3M\x0f\xe5\x96\xefL\xa1\x98\xf3B\x14\x88\xf7(=\xd2\x98\x1fP\x92\xcd\xcf\xc2DZ2\x0f\xd9\xa8\x86d\x08\xd3US\xdf\xc3\xa2S\x91qT&amp;\x8a\x0e\xe0\x16Y\xf3\x01\xdc\x9b\x12[\x1b\x0fn\xcd4Z\&#x27;\xc5\xb1\xb0\x9d\xbb;J\xea\xf0-\x88\xcbk\x01\xbf6\x9b\xc6df\xfc\x1d\t=v\xbb%\xe5|\xc3WU{n\xda488\&#x27;\xbd\x8f\xe2\xc6\xfc\xa6hu\x9a\xe3\xe6,\x9b\xa13&quot;lEl[\x83\x08\xed\x93*`n?\\\xee+\xd4\x17\xba\x8d\x95o\x16\x11\x0b\xdc\x98L\xc2\xbebf\x11\xef\xc6\x10\xaa\xfa3p\xa1\xd8\xb6\xf8\xf0\x8cax\xa2\x0ee\x11\xe3\xdbv\xb8\xf5\xf4\xa6|\x08\x17\xbch\x9c\x91?=c\xc6\x82y\x1ew\xdfx\xc7^\xefp\x14\x8e9\xb2j\xb5\x8d\x9f\x90\x0c\x97\xce\xd0\xf2\xf8\tG\xcc\x99}\xa8\x07\x14\x07L\xcdJ\xf1R\x82\x17\x1bz|\x8d@i\xf6e\xb9\xf5\xea0O\x9d{\xdbMzz\xca\x1f\x8b\xf2[\x8f\\\xb7\xb4\x8b\xbbV\x00\xfc\x0bV\xa9\xbdW&amp;\xf5\xf2\xbf\x9eGq\x9d=\x03&quot;\xed\x8er%\xf1&lt;V\x99A\x975\xda\x8f\xae&quot;\x8dQ\xf4\x91\x9a \xf69\xf1\xc4\xb3\xf4\xc8\r\x0fU\xd5k\nK\xd3T\xc33\xb8\x02\x0f\\\x1c3Q2\xab\xf4\x18\x07\xc9\xb01%0#\x06\t*\x86H\x86\xf7\r\x01\t\x151\x16\x04\x14\x17\xf20\xaf\xe1&gt;\xc4d\xc18\x12\x95Z&quot;q\x94\x8c\xbf\xc9w0\x81\xd8\x06\t*\x86H\x86\xf7\r\x01\x07\x01\xa0\x81\xca\x04\x81\xc70\x81\xc40\x81\xc1\x06\x0b*\x86H\x86\xf7\r\x01\x0c\n\x01\x01\xa0\x81\x8a0\x81\x87\x02\x01\x000\x13\x06\x07*\x86H\xce=\x02\x01\x06\x08*\x86H\xce=\x03\x01\x07\x04m0k\x02\x01\x01\x04 \xe9\xf2\xe3\xe1F\x17\x0e\xe7@w\xact\x9b\xf34\x0f1\xf3`\xca\x00+1K*\x99\x9efo\xbf.\xc6\xa1D\x03B\x00\x04c&amp;&amp;3\xfd\xad\x88#KVBn\xe6\xd5\x82\xbd\xaa\xb8_x@K\xac&amp;\xc1\xef\xda\xfb\x83J\xb3\xf3W\x030Z\xf9b\xa2\x01\x88A\xc2&gt;\xd5e\xe8n\xe4\xe0\xb1]X2&gt;\xe1\x10+\xdb\x92A3\x9e\xe31%0#\x06\t*\x86H\x86\xf7\r\x01\t\x151\x16\x04\x14\x17\xf20\xaf\xe1&gt;\xc4d\xc18\x12\x95Z&quot;q\x94\x8c\xbf\xc9w0A010\r\x06\t`\x86H\x01e\x03\x04\x02\x01\x05\x00\x04 &lt;Lq\xb8\x141\xd0\xcbqw\xe8\r\x04\xf9t\x9c$\r\xa35\x15\xa1\xae\x95\xce@;\x164\x1c\xd3O\x04\x08_\xe5\xad\xdcY{\xef\xb1\x02\x02\x08\x00&#x27; 
+
+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 
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            16:47:6d:a1:5e:b7:31:7f:c0:4a:b7:a0:a5:ae:d9:cb:92:db:66:d6
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: O = Company, CN = Example CA
+        Validity
+            Not Before: Apr 30 10:30:51 2023 GMT
+            Not After : Apr 28 14:20:39 2033 GMT
+        Subject: C = FR, O = Company, OU = Unit, CN = user
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub:
+                    04:63:26:26:33:fd:ad:88:23:4b:56:42:6e:e6:d5:
+                    82:bd:aa:b8:5f:78:40:4b:ac:26:c1:ef:da:fb:83:
+                    4a:b3:f3:57:03:30:5a:f9:62:a2:01:88:41:c2:3e:
+                    d5:65:e8:6e:e4:e0:b1:5d:58:32:3e:e1:10:2b:db:
+                    92:41:33:9e:e3
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                DD:73:41:58:25:4B:2B:89:C3:20:DE:25:99:17:8E:E6:FE:68:AE:70
+            X509v3 Authority Key Identifier: 
+                keyid:C6:FD:F8:C3:0C:F7:24:22:4C:67:F5:44:9F:3B:59:9A:37:53:EF:56
+
+            X509v3 Key Usage: 
+                Digital Signature
+            X509v3 Extended Key Usage: critical
+                Code Signing
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://localhost/crl
+
+                Full Name:
+                  URI:ldap://localhost/crl
+
+            X509v3 Freshest CRL: 
+
+                Full Name:
+                  URI:http://localhost/delta
+
+                Full Name:
+                  URI:ldap://localhost/delta
+
+            X509v3 Subject Alternative Name: 
+                DNS:www.example.com, IP Address:127.0.0.1, Registered ID:1.2.3.4, email:email@example.com, othername:&lt;unsupported&gt;, DirName:/DC=LDAP/O=Example/CN=machine, othername:&lt;unsupported&gt;, othername:&lt;unsupported&gt;
+            X509v3 Issuer Alternative Name: 
+                email:admin@example.com
+            X509v3 Certificate Policies: 
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.1
+                  CPS: http://localhost/csp1
+                  User Notice:
+                    Organization: org
+                    Number: 1
+                    Explicit Text: txt
+                Policy: 1.3.6.1.4.1.6189.5.1.1.1.2
+                  CPS: http://localhost/cps2
+
+            OCSP No Check: critical
+
+            1.3.6.1.4.1.311.25.2: 
+                0....
++.....7....
+..S-1-5-47
+            Authority Information Access: 
+                OCSP - URI:http://localhost/ocsp
+                CA Issuers - URI:http://localhost/ca
+
+    Signature Algorithm: sha256WithRSAEncryption
+         75:1d:ea:73:e2:2a:db:f7:2f:fe:11:70:da:13:46:ee:33:77:
+         bf:0f:81:df:c2:22:49:a9:48:d2:bb:d8:a5:62:66:56:77:bc:
+         25:1f:60:ec:74:83:d3:47:6b:53:67:13:3c:6d:22:58:d5:3e:
+         1a:b3:4d:0f:e5:96:ef:4c:a1:98:f3:42:14:88:f7:28:3d:d2:
+         98:1f:50:92:cd:cf:c2:44:5a:32:0f:d9:a8:86:64:08:d3:55:
+         53:df:c3:a2:53:91:71:54:26:8a:0e:e0:16:59:f3:01:dc:9b:
+         12:5b:1b:0f:6e:cd:34:5a:27:c5:b1:b0:9d:bb:3b:4a:ea:f0:
+         2d:88:cb:6b:01:bf:36:9b:c6:64:66:fc:1d:09:3d:76:bb:25:
+         e5:7c:c3:57:55:7b:6e:da:34:38:38:27:bd:8f:e2:c6:fc:a6:
+         68:75:9a:e3:e6:2c:9b:a1:33:22:6c:45:6c:5b:83:08:ed:93:
+         2a:60:6e:3f:5c:ee:2b:d4:17:ba:8d:95:6f:16:11:0b:dc:98:
+         4c:c2:be:62:66:11:ef:c6:10:aa:fa:33:70:a1:d8:b6:f8:f0:
+         8c:61:78:a2:0e:65:11:e3:db:76:b8:f5:f4:a6:7c:08:17:bc:
+         68:9c:91:3f:3d:63:c6:82:79:1e:77:df:78:c7:5e:ef:70:14:
+         8e:39:b2:6a:b5:8d:9f:90:0c:97:ce:d0:f2:f8:09:47:cc:99:
+         7d:a8:07:14:07:4c:cd:4a:f1:52:82:17:1b:7a:7c:8d:40:69:
+         f6:65:b9:f5:ea:30:4f:9d:7b:db:4d:7a:7a:ca:1f:8b:f2:5b:
+         8f:5c:b7:b4:8b:bb:56:00:fc:0b:56:a9:bd:57:26:f5:f2:bf:
+         9e:47:71:9d:3d:03:22:ed:8e:72:25:f1:3c:56:99:41:97:35:
+         da:8f:ae:22:8d:51:f4:91:9a:20:f6:39:f1:c4:b3:f4:c8:0d:
+         0f:55:d5:6b:0a:4b:d3:54:c3:33:b8:02:0f:5c:1c:33:51:32:
+         ab:f4:18:07:c9:b0
+
+Private-Key: (256 bit)
+priv:
+    e9:f2:e3:e1:46:17:0e:e7:40:77:ac:74:9b:f3:34:
+    0f:31:f3:60:ca:00:2b:31:4b:2a:99:9e:66:6f:bf:
+    2e:c6
+pub:
+    04:63:26:26:33:fd:ad:88:23:4b:56:42:6e:e6:d5:
+    82:bd:aa:b8:5f:78:40:4b:ac:26:c1:ef:da:fb:83:
+    4a:b3:f3:57:03:30:5a:f9:62:a2:01:88:41:c2:3e:
+    d5:65:e8:6e:e4:e0:b1:5d:58:32:3e:e1:10:2b:db:
+    92:41:33:9e:e3
+ASN1 OID: prime256v1
+NIST CURVE: P-256
+ 
+
+<br/></div></td></tr></tbody></table></body></html>

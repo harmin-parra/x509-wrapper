@@ -49,11 +49,11 @@ def test_save_ecdsa(p12_ecdsa):
     P12.save(p12_ecdsa.get_cert(), p12_ecdsa.get_key(), f"test{os.sep}tmp{os.sep}ecdsa.p12", "test")
 
 def test_dump_rsa(p12_rsa):
-    print(p12_rsa.dump("BASE64"))
-    print(p12_rsa.dump("TEXT"))
-    print(p12_rsa.dump("DER"))
+    print(p12_rsa.dump("DER"), '\n')
+    print(p12_rsa.dump("BASE64"), '\n')
+    print(p12_rsa.dump("TEXT"), '\n')
 
 def test_dump_ecdsa(p12_ecdsa):
-    print(p12_ecdsa.dump("BASE64"))
-    print(p12_ecdsa.dump("TEXT"))
-    print(p12_ecdsa.dump("DER"))
+    print(p12_ecdsa.dump("DER"), '\n')
+    print(p12_ecdsa.dump("BASE64"), '\n')
+    print(p12_ecdsa.dump("TEXT"), '\n')

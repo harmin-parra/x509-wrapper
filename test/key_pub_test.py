@@ -90,13 +90,13 @@ def test_save_ecdsa(key_ecdsa):
 # Test dumpers
 #
 def test_dump_rsa(key_rsa):
-    print(key_rsa.dump("DER"))
-    print(key_rsa.dump("BASE64"))
-    print(key_rsa.dump("PEM"))
-    print(key_rsa.dump("TEXT"))
+    print(key_rsa.dump("DER"), '\n')
+    print(key_rsa.dump("BASE64"), '\n')
+    print(key_rsa.dump("PEM"), '\n')
+    print(key_rsa.dump("TEXT"), '\n')
 
 def test_dump_ecdsa(key_ecdsa):
-    print(key_ecdsa.dump("DER"))
-    print(key_ecdsa.dump("BASE64"))
-    print(key_ecdsa.dump("PEM"))
-    print(key_ecdsa.dump("TEXT"))
+    print(key_ecdsa.dump("DER"), '\n')
+    print(key_ecdsa.dump("BASE64"), '\n')
+    print(key_ecdsa.dump("PEM"), '\n')
+    print(key_ecdsa.dump("TEXT"), '\n')
