@@ -77,10 +77,10 @@ class CSR(BASE):
                 Possible values: 'PEM' and 'DER'.
             key_type (str): The type of the private key to generate.
                 Possible values: 'RSA' and 'ECDSA'.
-            key_size (str): The size in bits of the private key to generate.
+            key_size (int): The size in bits of the private key to generate.
                 Possible values: 1024, 2048, 3072 and 4096
                 Only relevant for RSA keys.
-            key_curve (cryptography.hazmat.primitives.asymmetric.ec):
+            key_curve (cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve):
                 The Elliptic curve of the ECDSA private key to generate.
                 Only relevant for ECDSA keys.
             CN (str, optional): The Common Name RDN

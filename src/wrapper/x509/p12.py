@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.primitives import serialization
 
 
-class P12():
+class P12:
 
     def __init__(self):
         self._obj = None

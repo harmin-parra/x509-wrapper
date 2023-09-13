@@ -58,6 +58,7 @@ class KEY(BASE):
         """ Loads a private key from a PEM format file.
         Args:
             filepath (str): File path of the file to load.
+            passphrase (str): The file passphrase.
         Returns:
             The private key object.
         """
@@ -70,6 +71,7 @@ class KEY(BASE):
         """ Loads a private key from a DER format file.
         Args:
             filepath (str): File path of the file to load.
+            passphrase (str): The file passphrase.
         Returns:
             The private key object.
         """
@@ -85,9 +87,9 @@ class KEY(BASE):
         Returns:
             The private key object.
         """
-        b64 = b64 = "-----BEGIN RSA PRIVATE KEY-----" + '\n' + \
-                    b64 + '\n' + \
-                    "-----END RSA PRIVATE KEY-----"
+        b64 = "-----BEGIN RSA PRIVATE KEY-----" + '\n' + \
+              b64 + '\n' + \
+              "-----END RSA PRIVATE KEY-----"
         obj = cls()
         obj.load_from_base64(b64, serialization.load_pem_private_key)
         return obj

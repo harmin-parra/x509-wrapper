@@ -212,7 +212,7 @@ class Certificate(BASE):
                 value.append(oid)
                 if p._policy_qualifiers is not None:
                     for q in p._policy_qualifiers:
-                        if (type(q) == str):
+                        if type(q) == str:
                             value.append(('csp', q))
                         else:  # type(q) == UserNotice:
                             org = None

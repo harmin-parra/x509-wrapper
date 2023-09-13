@@ -39,7 +39,7 @@ def test_issuer_dn(delta1):
     assert delta1.get_issuer_dn() == "CN=Example CA,O=Company"
 
 def test_aki(delta1):
-    assert delta1.get_aki() == None
+    assert delta1.get_aki() is None
 
 def test_crl_number(delta1):
     assert delta1.get_crl_number() == 3

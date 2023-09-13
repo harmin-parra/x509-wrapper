@@ -132,7 +132,7 @@ class CRL(BASE):
 #
 # AUXILIARY CLASS
 #
-class CRL_ENTRY():
+class CRL_ENTRY:
 
     def __init__(self, obj):
         self._obj = obj

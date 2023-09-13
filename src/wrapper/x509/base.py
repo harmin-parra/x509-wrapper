@@ -64,7 +64,7 @@ def get_general_names(names):
             elif oid == "1.3.6.1.5.5.7.8.9":
                 result.append(("Mailbox", value))
             else:
-                result.append(("Other", ((oid, value))))
+                result.append(("Other", (oid, value)))
     return result
 
 

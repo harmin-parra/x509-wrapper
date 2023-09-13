@@ -79,7 +79,7 @@ def test_rsa_key_size(csr_rsa):
     assert csr_rsa.get_key_size() == 3072
 
 def test_rsa_key_curve(csr_rsa):
-    assert csr_rsa.get_key_curve() == None
+    assert csr_rsa.get_key_curve() is None
 
 def test_ecdsa_key_type(csr_ecdsa):
     assert csr_ecdsa.get_key_type() == "ECDSA"

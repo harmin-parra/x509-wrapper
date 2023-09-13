@@ -75,13 +75,13 @@ def test_ski(cert_rsa):
 def test_san(cert_rsa):
     values = cert_rsa.get_san()
     assert ('DNS', 'www.example.com') in values
-    assert ('IP','127.0.0.1') in values
-    assert ('URI','http://www.example.com') in values
-    assert ('RegID','1.2.3.4') in values
-    assert ('Email','email@example.com') in values
-    assert ('DirName','CN=machine,O=Example,DC=LDAP') in values
-    assert ('UPN','upn@example.com') in values
-    assert ('Mailbox','smtpUTF8Mailbox@example.com') in values
+    assert ('IP', '127.0.0.1') in values
+    assert ('URI', 'http://www.example.com') in values
+    assert ('RegID', '1.2.3.4') in values
+    assert ('Email', 'email@example.com') in values
+    assert ('DirName', 'CN=machine,O=Example,DC=LDAP') in values
+    assert ('UPN', 'upn@example.com') in values
+    assert ('Mailbox', 'smtpUTF8Mailbox@example.com') in values
     assert ('Other', ('1.3.6.1.4.1.311.25.1', 'ac4b2906aad65d4fa99c4cbcb06a65d9')) in values
 
 def test_san_empty(cert_ecdsa):
@@ -101,7 +101,7 @@ def test_rsa_key_size(cert_rsa):
     assert cert_rsa.get_key_size() == 3072
 
 def test_rsa_key_curve(cert_rsa):
-    assert cert_rsa.get_key_curve() == None
+    assert cert_rsa.get_key_curve() is None
 
 def test_ecdsa_key_type(cert_ecdsa):
     assert cert_ecdsa.get_key_type() == "ECDSA"
@@ -146,31 +146,31 @@ def test_sid_empty(cert_ecdsa):
 
 def test_key_usage(cert_rsa):
     values = cert_rsa.get_key_usage()
-    assert values['critical'] == False
-    assert values['digital_signature'] == True
-    assert values['content_commitment'] == False
-    assert values['key_encipherment'] == False
-    assert values['data_encipherment'] == False
-    assert values['key_agreement'] == False
-    assert values['certificate_sign'] == False
-    assert values['crl_sign'] == False
-    assert values['encipher_only'] == False
-    assert values['decipher_only'] == False
+    assert values['critical'] is False
+    assert values['digital_signature'] is True
+    assert values['content_commitment'] is False
+    assert values['key_encipherment'] is False
+    assert values['data_encipherment'] is False
+    assert values['key_agreement'] is False
+    assert values['certificate_sign'] is False
+    assert values['crl_sign'] is False
+    assert values['encipher_only'] is False
+    assert values['decipher_only'] is False
 
 def test_extended_key_usage(cert_rsa):
     values = cert_rsa.get_ext_key_usage()
-    assert values['critical'] == True
+    assert values['critical'] is True
     assert '1.3.6.1.5.5.7.3.3' in values['value']
 
 def test_has_expired_true(cert_ecdsa):
-    assert cert_ecdsa.has_expired() == True
+    assert cert_ecdsa.has_expired() is True
     pass
 
 def test_OCSP_nocheck_true(cert_rsa):
-    assert cert_rsa.get_ocsp_nocheck() == True
+    assert cert_rsa.get_ocsp_nocheck() is True
 
 def test_OCSP_nocheck_false(cert_ecdsa):
-    assert cert_ecdsa.get_ocsp_nocheck() == None
+    assert cert_ecdsa.get_ocsp_nocheck() is None
 
 def test_policies(cert_rsa):
     assert ('1.3.6.1.4.1.6189.5.1.1.1.1', ('csp', 'http://localhost/csp'), ('notice', ('txt1', 'org1', [1]))) in cert_rsa.get_policies()
