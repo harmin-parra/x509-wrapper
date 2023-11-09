@@ -68,7 +68,8 @@ class CSR(BASE):
     def generate(file_csr='file.csr', file_key='file.key', file_format='PEM',
                  key_type='RSA', key_size=3072, key_curve=ec.SECP256R1,
                  CN=None, OU=None, O=None, C=None, Names=None,
-                 DNS=None, IP=None, URI=None, RegID=None, Email=None, UPN=None):
+                 DNS=None, IP=None, URI=None, RegID=None,
+                 Email=None, UPN=None, Mailbox=None):
         """ Generate a CSR and private key.
         Args:
             file_csr (str): The file path to store the CSR
@@ -95,6 +96,7 @@ class CSR(BASE):
             Email (list[str], optional): The list of Emails to include in the SAN extension
             UPN (list[str], optional): The list of UPN emails to include in the SAN extension
             RegID (list[str], optional): The list of Registration IDs to include in the SAN extension
+            Mailbox (list(str)], optional): The list of SmtpUTF8Mailbox names to include in the SAN extension
         """
         if file_format not in ('DER', 'PEM'):
             raise ValueError(f"invalid parameter value: '{file_format}'. Expected value: 'PEM' or 'DER'")
@@ -119,39 +121,42 @@ class CSR(BASE):
         csr = x509.CertificateSigningRequestBuilder()
 
         san = []
-        if DNS is not None and len(DNS) != 0:
+        if DNS is not None:
             for i in DNS:
                 san.append(x509.DNSName(i))
-        if IP is not None and len(IP) != 0:
+        if IP is not None:
             for i in IP:
                 san.append(x509.IPAddress(ipaddress.IPv4Address(i)))
-        if URI is not None and len(URI) != 0:
+        if URI is not None:
             for i in URI:
                 san.append(x509.UniformResourceIdentifier(i))
-        if RegID is not None and len(RegID) != 0:
+        if RegID is not None:
             for i in RegID:
                 san.append(x509.RegisteredID(ObjectIdentifier(i)))
-        if Email is not None and len(Email) != 0:
+        if Email is not None:
             for i in Email:
                 san.append(x509.RFC822Name(i))
-        if UPN is not None and len(UPN) != 0:
+        if UPN is not None:
             for i in UPN:
                 san.append(x509.OtherName(ObjectIdentifier('1.3.6.1.4.1.311.20.2.3'), encode_to_der(i)))
+        if Mailbox is not None:
+            for i in Mailbox:
+                san.append(x509.OtherName(ObjectIdentifier('1.3.6.1.5.5.7.8.9'), encode_to_der(i)))
         csr = csr.add_extension(x509.SubjectAlternativeName(san), critical=False)
 
-        name = []
+        names = []
         if CN is not None:
-            name.append(x509.NameAttribute(NameOID.COMMON_NAME, CN))
+            names.append(x509.NameAttribute(NameOID.COMMON_NAME, CN))
         if OU is not None:
-            name.append(x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, OU))
+            names.append(x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, OU))
         if O is not None:
-            name.append(x509.NameAttribute(NameOID.ORGANIZATION_NAME, O))
+            names.append(x509.NameAttribute(NameOID.ORGANIZATION_NAME, O))
         if C is not None:
-            name.append(x509.NameAttribute(NameOID.COUNTRY_NAME, C))
+            names.append(x509.NameAttribute(NameOID.COUNTRY_NAME, C))
         if Names is not None:
             for rdn in Names:
-                name.append(x509.NameAttribute(rdn, Names[rdn]))
-        csr = csr.subject_name(x509.Name(name))
+                names.append(x509.NameAttribute(rdn, Names[rdn]))
+        csr = csr.subject_name(x509.Name(names))
 
         csr = csr.sign(key, hashes.SHA256())
 
