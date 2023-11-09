@@ -109,11 +109,13 @@ def test_generate_ecdsa_csr():
         file_csr=f"test{os.sep}tmp{os.sep}ecdsa.csr", file_key=f"test{os.sep}tmp{os.sep}ecdsa.key",
         key_type='ECDSA', key_curve=ec.BrainpoolP512R1,
         CN='test', OU='test', O='test', C='FR',
-        DNS=['test.fr', 'test.loc'], RegID=['1.2.3.4'],
-        Email=['test@email.com'], IP=["127.0.0.1"]
+        UPN=['test@upn.com', '이메일@도메인.kr'],
+        Mailbox=['test@mailbox.com', 'տիրույթ@example.am']
     )
     csr = CSR.load_pem_file(f"test{os.sep}tmp{os.sep}ecdsa.csr")
     assert isinstance(csr._obj, cryptography.x509.CertificateSigningRequest)
+    print(csr.get_san())
+
 
 def test_generate_rdn_csr():
     names = {
