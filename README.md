@@ -6,22 +6,22 @@ It allows to query X.509 cryptographic object attributes in a fast and easy way.
 
 The attribute values are returned as Python primitive and built-in types (`integer`, `string`, `boolean`, `list` and `tuples`) instead of being returned as  instances of `pyca/cryptography` classes like `cryptography.x509.Name`, `cryptography.x509.GeneralName`, `cryptography.x509.AuthorityKeyIdentifier`, `cryptography.x509.CRLDistributionPoints`, `cryptography.x509.Extension`, etc.
 
-## Supported X.509 cryptography objects
+# Supported X.509 cryptography objects
 - Certificate
 - Certificate revocation list (CRL)
 - Delta certificate revocation list (Delta CRL)
 - Certificate signing request (CSR)
 - RSA / ECDSA public and private key
 
-## Limitations
-### CSR generation with multi-valued RDNs*
+# Limitations
+## CSR generation with multi-valued RDNs*
 
 No support for CSR generation with multi-valued RDNs
 (Example: `CN=user, OU=unit1, OU=unit2, OU=unit3, C=Company`)
 
 *This limitation doesn't apply to CSR loaders.
 
-### CSR generation with SAN*
+## CSR generation with SAN*
 
 No support for CSR generation with the following Subject Alternative Name (SAN) types:
   + Directory Name
@@ -29,17 +29,17 @@ No support for CSR generation with the following Subject Alternative Name (SAN) 
 
 *This limitation doesn't apply to CSR loaders.
 
-### Loading of ECDSA private and public keys
+## Loading of ECDSA private and public keys
 
 `pyca/cryptography` doesn't support ECDSA keys with explicit parameters ([#7339](https://github.com/pyca/cryptography/issues/7339), [#5659](https://github.com/pyca/cryptography/issues/5659)).
 Therefore, loading ECDSA keys from base64 strings is not supported.
 
-### Parsing public key of ECDSA x509 certificates*
+## Parsing public key of ECDSA x509 certificates*
 Again, due to issues [#7339](https://github.com/pyca/cryptography/issues/7339) and [#5659](https://github.com/pyca/cryptography/issues/5659), it is not always possible to query the public key size and curve of ECDSA X.509 certificates. 
 
 *This issue doesn't affect the parsing of the ECDSA X.509 certificate itself.
 
-## Prerequisites
+# Prerequisites
 
 Required modules:
 
@@ -48,9 +48,9 @@ Required modules:
 
 `pip install cryptography>=36.0.0 asn1>=2.7.0`
 
-## Usage
+# Usage
 
-### X.509 Certificate
+## X.509 Certificate
 
 ### Loaders
 ```python
@@ -93,7 +93,7 @@ print("Key Curve:", cert.get_key_curve())
 
 ```
 
-### X.509 CRL
+## X.509 CRL
 
 ### Loaders
 ```python
@@ -133,7 +133,7 @@ print("CRL entry revocation date:", entry.get_revocation_date())
 print("CRL entry invalidity date:", entry.get_invalidity_date())
 ```
 
-### X.509 CSR
+## X.509 CSR
 
 ### Loaders
 
@@ -196,7 +196,7 @@ CSR.generate(
 )
 ```
 
-### Keys
+## Keys
 
 ### Loaders
 ```python
