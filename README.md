@@ -165,6 +165,7 @@ print("Key Curve:", csr.get_key_curve())
 
 ### Constructor
 ```python
+from wrapper.x509 import CSR
 from wrapper.x509 import RDN
 from cryptography.hazmat.primitives.asymmetric import ec
 
